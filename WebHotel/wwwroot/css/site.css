@@ -14,6 +14,11 @@ body {
     margin-bottom: 80px;
     background: #f5f7fa;
     color: #2d3436;
+    overflow-x: hidden;
+}
+
+html {
+    overflow-x: hidden;
 }
 
 h1, h2, h3 {
@@ -27,23 +32,116 @@ h1, h2, h3 {
 }
 
 /* --- Navbar --- */
+.app-navbar {
+    background: linear-gradient(135deg, #17181f 0%, #1d1f2a 100%) !important;
+}
+
+.header-shell {
+    max-width: 1720px;
+    margin: 0 auto;
+    align-items: center;
+    gap: 1rem;
+}
+
 .navbar-brand {
     font-weight: 800;
     font-size: 1.4rem;
     letter-spacing: -0.5px;
+    margin-right: 1.5rem;
 }
+
+.main-nav {
+    gap: 0.25rem;
+}
+
 .navbar .nav-link {
     font-weight: 500;
-    padding: 0.5rem 0.8rem !important;
+    font-size: 0.95rem;
+    padding: 0.55rem 0.85rem !important;
     border-radius: 0.5rem;
-    transition: background 0.2s;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
 }
+
+.navbar .nav-link i {
+    margin-right: 0.4rem;
+    opacity: 0.8;
+}
+
 .navbar .nav-link:hover {
     background: rgba(255, 255, 255, 0.12);
 }
+
 .navbar .navbar-text {
     font-size: 0.85rem;
     opacity: 0.85;
+}
+
+.account-nav {
+    gap: 0.25rem;
+}
+
+.user-nav-item {
+    margin-right: 0.5rem;
+}
+
+.user-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.5rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.user-chip .badge {
+    margin-left: 0.1rem;
+    font-size: 0.68rem;
+    letter-spacing: 0.04em;
+}
+
+.user-name {
+    display: inline-block;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: bottom;
+}
+
+@media (max-width: 1399.98px) {
+    .navbar-brand {
+        margin-right: 0.75rem;
+    }
+
+    .navbar .nav-link {
+        padding: 0.5rem 0.7rem !important;
+        font-size: 0.9rem;
+    }
+
+    .user-name {
+        max-width: 180px;
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .header-shell {
+        align-items: flex-start;
+    }
+
+    .main-nav,
+    .account-nav {
+        gap: 0;
+    }
+
+    .user-nav-item {
+        margin-right: 0;
+        margin-bottom: 0.35rem;
+    }
+
+    .user-chip {
+        width: fit-content;
+    }
 }
 
 /* --- Cards --- */
@@ -141,6 +239,7 @@ h1, h2, h3 {
 }
 .room-card .card-body {
     padding: 1.25rem;
+    background: #fff;
 }
 .room-card .room-number {
     font-size: 1.15rem;
@@ -293,6 +392,8 @@ footer.footer {
     padding: 1.2rem 0;
     position: absolute;
     bottom: 0;
+    left: 0;
+    right: 0;
     width: 100%;
 }
 footer.footer a {

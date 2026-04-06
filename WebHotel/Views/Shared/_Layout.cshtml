@@ -11,8 +11,8 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-dark bg-primary border-0 shadow-sm mb-4">
-            <div class="container">
+        <nav class="navbar navbar-expand-xl navbar-dark bg-primary border-0 shadow-sm mb-4 app-navbar">
+            <div class="container-fluid header-shell px-3 px-lg-4">
                 <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
                     <i class="bi bi-building"></i> WebHotel
                 </a>
@@ -22,7 +22,7 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="mainNav">
-                    <ul class="navbar-nav me-auto mb-2 mb-sm-0">
+                    <ul class="navbar-nav main-nav me-auto mb-2 mb-xl-0">
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">
                                 <i class="bi bi-house-door"></i> Home
@@ -79,16 +79,16 @@
                         </li>
                     </ul>
 
-                    <ul class="navbar-nav align-items-center">
+                    <ul class="navbar-nav account-nav align-items-xl-center">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
-                            <li class="nav-item me-2">
-                                <span class="navbar-text">
+                            <li class="nav-item user-nav-item">
+                                <span class="navbar-text user-chip">
                                     <i class="bi bi-person-circle"></i>
-                                    @User.Identity!.Name
+                                    <span class="user-name">@User.Identity!.Name</span>
                                     @if (User.IsInRole("Admin"))
                                     {
-                                        <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem">ADMIN</span>
+                                        <span class="badge bg-warning text-dark">Admin</span>
                                     }
                                 </span>
                             </li>
