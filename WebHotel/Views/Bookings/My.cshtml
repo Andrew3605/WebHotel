@@ -1,0 +1,81 @@
+@model IEnumerable<WebHotel.Models.Booking>
+@{
+    ViewData["Title"] = "My Bookings";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-calendar-check"></i> My Bookings</h1>
+</div>
+
+@if (TempData["PaymentOk"] is string msg)
+{
+    <div class="alert alert-success d-flex align-items-center">
+        <i class="bi bi-check-circle-fill me-2"></i> @msg
+    </div>
+}
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <i class="bi bi-calendar-x"></i>
+        <p>No bookings yet.</p>
+        <p class="text-muted small">Search for a room to make your first booking!</p>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var b in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h5 class="mb-1 fw-bold">
+                                    <i class="bi bi-door-open text-primary"></i> Room @b.Room?.Number
+                                </h5>
+                                <span class="text-muted small">Booking #@b.Id</span>
+                            </div>
+                            @if (b.IsPaid)
+                            {
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Paid</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-danger"><i class="bi bi-clock"></i> Unpaid</span>
+                            }
+                        </div>
+
+                        <div class="row g-2 mb-3">
+                            <div class="col-6">
+                                <div class="small text-muted fw-bold text-uppercase">Check-in</div>
+                                <div class="fw-semibold">@b.CheckIn.ToString("MMM dd, yyyy")</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="small text-muted fw-bold text-uppercase">Check-out</div>
+                                <div class="fw-semibold">@b.CheckOut.ToString("MMM dd, yyyy")</div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                            <div>
+                                <span class="text-muted small">Total</span>
+                                <div class="fs-5 fw-bold text-primary">@b.TotalPrice.ToString("C")</div>
+                            </div>
+                            @if (!b.IsPaid)
+                            {
+                                <a class="btn btn-success"
+                                   asp-controller="Payments"
+                                   asp-action="Pay"
+                                   asp-route-bookingId="@b.Id">
+                                    <i class="bi bi-credit-card"></i> Pay Now
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

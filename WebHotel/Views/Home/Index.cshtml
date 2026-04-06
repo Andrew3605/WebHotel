@@ -1,0 +1,127 @@
+@model WebHotel.ViewModels.AvailabilitySearchVm
+@{
+    ViewData["Title"] = "Find a Room";
+}
+
+<div class="hero-search">
+    <h1><i class="bi bi-search"></i> Find Your Perfect Room</h1>
+    <p class="lead">Search available rooms by date and number of guests</p>
+
+    <form asp-action="Search" asp-controller="Home" method="post" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label asp-for="CheckIn" class="form-label">Check-in</label>
+            <input asp-for="CheckIn" class="form-control" />
+            <span asp-validation-for="CheckIn" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="CheckOut" class="form-label">Check-out</label>
+            <input asp-for="CheckOut" class="form-control" />
+            <span asp-validation-for="CheckOut" class="text-danger"></span>
+        </div>
+        <div class="col-md-3">
+            <label asp-for="Guests" class="form-label">Guests</label>
+            <input asp-for="Guests" class="form-control" min="1" placeholder="Number of guests" />
+            <span asp-validation-for="Guests" class="text-danger"></span>
+        </div>
+        <div class="col-md-3 d-grid">
+            <button class="btn btn-light btn-lg fw-bold">
+                <i class="bi bi-search"></i> Search
+            </button>
+        </div>
+    </form>
+</div>
+
+@if (!ViewData.ModelState.IsValid)
+{
+    <div class="alert alert-danger d-flex align-items-center">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i> Please fix the errors above.
+    </div>
+}
+
+@if (Model.AvailableRooms?.Any() == true)
+{
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0"><i class="bi bi-door-open"></i> Available Rooms</h2>
+        <span class="badge bg-primary fs-6">@Model.AvailableRooms.Count found</span>
+    </div>
+
+    <div class="row g-4">
+        @foreach (var r in Model.AvailableRooms)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card room-card">
+                    <div class="room-icon">
+                        @switch (r.Type)
+                        {
+                            case "Suite":
+                                <i class="bi bi-star-fill"></i>
+                                break;
+                            case "Deluxe":
+                                <i class="bi bi-gem"></i>
+                                break;
+                            default:
+                                <i class="bi bi-door-open"></i>
+                                break;
+                        }
+                        <span class="room-type-badge badge @(r.Type == "Suite" ? "bg-warning text-dark" : r.Type == "Deluxe" ? "bg-info" : "bg-secondary")">
+                            @r.Type
+                        </span>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <span class="room-number">Room @r.Number</span>
+                                <div class="room-details">
+                                    <i class="bi bi-people-fill"></i> @r.Capacity guest@(r.Capacity > 1 ? "s" : "")
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <span class="room-price">@r.PricePerNight.ToString("C")</span>
+                                <small class="d-block">/ night</small>
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(r.Description))
+                        {
+                            <p class="text-muted small mb-3 flex-grow-1">@r.Description</p>
+                        }
+                        <div class="mt-auto">
+                            @if (User.IsInRole("Customer"))
+                            {
+                                <a class="btn btn-primary w-100"
+                                   asp-controller="CustomerRequests"
+                                   asp-action="Create"
+                                   asp-route-roomId="@r.Id"
+                                   asp-route-checkIn="@Model.CheckIn.ToString("yyyy-MM-dd")"
+                                   asp-route-checkOut="@Model.CheckOut.ToString("yyyy-MM-dd")">
+                                    <i class="bi bi-send"></i> Request Booking
+                                </a>
+                            }
+                            else if (!(User.Identity?.IsAuthenticated ?? false))
+                            {
+                                <a class="btn btn-outline-secondary w-100 disabled">
+                                    <i class="bi bi-lock"></i> Login to request
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (IsPost())
+{
+    <div class="empty-state">
+        <i class="bi bi-calendar-x"></i>
+        <p>No rooms available for those dates and guests.</p>
+        <p class="text-muted small">Try different dates or fewer guests.</p>
+    </div>
+}
+
+@functions {
+    bool IsPost() => string.Equals(Context.Request.Method, "POST", StringComparison.OrdinalIgnoreCase);
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

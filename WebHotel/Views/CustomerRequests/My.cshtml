@@ -1,0 +1,67 @@
+@model IEnumerable<WebHotel.Models.CustomerRequest>
+@using WebHotel.Models
+
+@{
+    ViewData["Title"] = "My Requests";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-send"></i> My Requests</h1>
+    <a class="btn btn-primary" asp-action="Create">
+        <i class="bi bi-plus-lg"></i> New Request
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <i class="bi bi-send"></i>
+        <p>No requests yet.</p>
+        <p class="text-muted small">Search for a room and submit a booking request!</p>
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Room</th>
+                    <th>Check-in</th>
+                    <th>Check-out</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Message</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model)
+                {
+                    <tr>
+                        <td><span class="badge bg-primary">@r.Type</span></td>
+                        <td class="fw-semibold">@(r.RoomId?.ToString() ?? "-")</td>
+                        <td>@(r.CheckIn?.ToString("MMM dd, yyyy") ?? "-")</td>
+                        <td>@(r.CheckOut?.ToString("MMM dd, yyyy") ?? "-")</td>
+                        <td>
+                            @switch (r.Status)
+                            {
+                                case RequestStatus.Pending:
+                                    <span class="badge status-badge-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                                    break;
+                                case RequestStatus.Approved:
+                                    <span class="badge status-badge-approved"><i class="bi bi-check-circle"></i> Approved</span>
+                                    break;
+                                case RequestStatus.Rejected:
+                                    <span class="badge status-badge-rejected"><i class="bi bi-x-circle"></i> Rejected</span>
+                                    break;
+                            }
+                        </td>
+                        <td class="text-muted small">@r.CreatedAt.ToString("MMM dd, yyyy HH:mm")</td>
+                        <td class="text-muted">@r.Message</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

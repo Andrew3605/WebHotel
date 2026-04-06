@@ -1,0 +1,49 @@
+@model IEnumerable<WebHotel.Models.Customer>
+
+@{
+    ViewData["Title"] = "Customers";
+}
+
+<div class="page-header">
+    <h1><i class="bi bi-people"></i> Customers</h1>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-person-plus"></i> Add Customer
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>Full Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <i class="bi bi-person-circle text-primary"></i>
+                        <span class="fw-semibold">@item.FullName</span>
+                    </td>
+                    <td><i class="bi bi-envelope text-muted"></i> @item.Email</td>
+                    <td><i class="bi bi-telephone text-muted"></i> @item.Phone</td>
+                    <td class="text-end action-links">
+                        <a class="btn-action-edit" asp-action="Edit" asp-route-id="@item.Id">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <a class="btn-action-detail" asp-action="Details" asp-route-id="@item.Id">
+                            <i class="bi bi-eye"></i> Details
+                        </a>
+                        <a class="btn-action-delete" asp-action="Delete" asp-route-id="@item.Id">
+                            <i class="bi bi-trash"></i> Delete
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

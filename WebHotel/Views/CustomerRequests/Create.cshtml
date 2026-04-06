@@ -1,0 +1,69 @@
+@model WebHotel.Models.CustomerRequest
+@{
+    ViewData["Title"] = "New Request";
+    var ci = ViewBag.PrefillCheckIn as string ?? "";
+    var co = ViewBag.PrefillCheckOut as string ?? "";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="page-header">
+            <h1><i class="bi bi-send"></i> Request a Booking</h1>
+        </div>
+
+        <div class="card">
+            <div class="card-body p-4">
+                <form asp-action="Create" method="post">
+                    <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-door-open text-primary"></i> Room
+                        </label>
+                        <select class="form-select" asp-for="RoomId" asp-items="ViewBag.Rooms">
+                            <option value="">-- select a room --</option>
+                        </select>
+                        <span asp-validation-for="RoomId" class="text-danger small"></span>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar-event text-primary"></i> Check-in
+                            </label>
+                            <input type="date" class="form-control" name="CheckIn" value="@ci" />
+                            <span asp-validation-for="CheckIn" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">
+                                <i class="bi bi-calendar-event text-primary"></i> Check-out
+                            </label>
+                            <input type="date" class="form-control" name="CheckOut" value="@co" />
+                            <span asp-validation-for="CheckOut" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            <i class="bi bi-chat-left-text text-primary"></i> Notes (optional)
+                        </label>
+                        <textarea class="form-control" asp-for="Message" rows="3" placeholder="Any special requests or notes..."></textarea>
+                    </div>
+
+                    <input type="hidden" asp-for="Type" value="NewBooking" />
+
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send"></i> Submit Request
+                        </button>
+                        <a asp-action="My" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

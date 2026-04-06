@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "WebHotel (HTTP)",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--no-build", "--project", "WebHotel", "--launch-profile", "http"],
+      "port": 5165
+    },
+    {
+      "name": "WebHotel (HTTPS)",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "WebHotel", "--launch-profile", "https"],
+      "port": 7182
+    }
+  ]
+}

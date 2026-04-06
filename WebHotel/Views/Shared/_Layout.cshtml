@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebHotel</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootswatch@5.3.3/dist/lux/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/WebHotel.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <header>
+        <nav class="navbar navbar-expand-sm navbar-dark bg-primary border-0 shadow-sm mb-4">
+            <div class="container">
+                <a class="navbar-brand d-flex align-items-center gap-2" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-building"></i> WebHotel
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav me-auto mb-2 mb-sm-0">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                <i class="bi bi-house-door"></i> Home
+                            </a>
+                        </li>
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="CustomerRequests" asp-action="Admin">
+                                    <i class="bi bi-inbox"></i> Requests
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Bookings" asp-action="Index">
+                                    <i class="bi bi-calendar-check"></i> Bookings
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Rooms" asp-action="Index">
+                                    <i class="bi bi-door-open"></i> Rooms
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Products" asp-action="Index">
+                                    <i class="bi bi-box-seam"></i> Products
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Customers" asp-action="Index">
+                                    <i class="bi bi-people"></i> Customers
+                                </a>
+                            </li>
+                        }
+
+                        @if (User.IsInRole("Customer"))
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="CustomerRequests" asp-action="My">
+                                    <i class="bi bi-send"></i> My Requests
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Bookings" asp-action="My">
+                                    <i class="bi bi-calendar-check"></i> My Bookings
+                                </a>
+                            </li>
+                        }
+
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Privacy">
+                                <i class="bi bi-shield-check"></i> Privacy
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul class="navbar-nav align-items-center">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item me-2">
+                                <span class="navbar-text">
+                                    <i class="bi bi-person-circle"></i>
+                                    @User.Identity!.Name
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size:.65rem">ADMIN</span>
+                                    }
+                                </span>
+                            </li>
+                        }
+                        <partial name="_LoginPartial" />
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container">
+        <main role="main" class="pb-3 fade-in-up">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container d-flex justify-content-between align-items-center">
+            <span>&copy; 2025 WebHotel</span>
+            <a asp-controller="Home" asp-action="Privacy">
+                <i class="bi bi-shield-check"></i> Privacy
+            </a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

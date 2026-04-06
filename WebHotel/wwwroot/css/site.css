@@ -1,0 +1,364 @@
+/* ===== WEBHOTEL - PROFESSIONAL THEME ===== */
+
+/* --- Base & Typography --- */
+html {
+    font-size: 14px;
+    position: relative;
+    min-height: 100%;
+}
+@media (min-width: 768px) {
+    html { font-size: 16px; }
+}
+
+body {
+    margin-bottom: 80px;
+    background: #f5f7fa;
+    color: #2d3436;
+}
+
+h1, h2, h3 {
+    font-weight: 700;
+}
+
+/* --- Focus States --- */
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus,
+.form-control:focus, .form-check-input:focus, .form-select:focus {
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem rgba(37, 140, 251, 0.5);
+}
+
+/* --- Navbar --- */
+.navbar-brand {
+    font-weight: 800;
+    font-size: 1.4rem;
+    letter-spacing: -0.5px;
+}
+.navbar .nav-link {
+    font-weight: 500;
+    padding: 0.5rem 0.8rem !important;
+    border-radius: 0.5rem;
+    transition: background 0.2s;
+}
+.navbar .nav-link:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+.navbar .navbar-text {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+/* --- Cards --- */
+.card {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+.card-header {
+    border-radius: 1rem 1rem 0 0 !important;
+    font-weight: 600;
+}
+
+/* --- Hero Section (Home) --- */
+.hero-search {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    border-radius: 1.2rem;
+    padding: 2.5rem 2rem;
+    color: #fff;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+.hero-search h1 {
+    font-size: 2rem;
+    font-weight: 800;
+    margin-bottom: 0.3rem;
+}
+.hero-search .lead {
+    opacity: 0.8;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+}
+.hero-search .form-control,
+.hero-search .form-select {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    backdrop-filter: blur(4px);
+}
+.hero-search .form-control::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+.hero-search .form-control:focus,
+.hero-search .form-select:focus {
+    background: rgba(255, 255, 255, 0.18);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.15);
+}
+.hero-search .form-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+}
+.hero-search input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* --- Room Cards --- */
+.room-card {
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+    height: 100%;
+}
+.room-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+.room-card .room-type-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.room-card .room-icon {
+    background: linear-gradient(135deg, #e8f4f8, #d4eaf5);
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: #0f3460;
+    position: relative;
+}
+.room-card .card-body {
+    padding: 1.25rem;
+}
+.room-card .room-number {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.room-card .room-details {
+    font-size: 0.85rem;
+    color: #636e72;
+}
+.room-card .room-price {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f3460;
+}
+.room-card .room-price small {
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: #636e72;
+}
+
+/* --- Tables --- */
+.table {
+    background: #fff;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+.table thead th {
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #636e72;
+    padding: 0.85rem 1rem;
+}
+.table tbody td {
+    padding: 0.85rem 1rem;
+    vertical-align: middle;
+}
+.table-hover tbody tr:hover {
+    background: #f0f6ff;
+}
+
+/* --- Badges --- */
+.badge {
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.4em 0.75em;
+    border-radius: 0.5rem;
+}
+.status-badge-pending {
+    background: #ffeaa7;
+    color: #6c5a00;
+}
+.status-badge-approved {
+    background: #d4edda;
+    color: #155724;
+}
+.status-badge-rejected {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+/* --- Buttons --- */
+.btn {
+    border-radius: 0.6rem;
+    font-weight: 600;
+    padding: 0.45rem 1.1rem;
+    transition: all 0.2s;
+}
+.btn-primary {
+    box-shadow: 0 2px 8px rgba(13, 110, 253, 0.25);
+}
+.btn-primary:hover {
+    box-shadow: 0 4px 14px rgba(13, 110, 253, 0.35);
+    transform: translateY(-1px);
+}
+.btn-success {
+    box-shadow: 0 2px 8px rgba(25, 135, 84, 0.25);
+}
+.btn-success:hover {
+    box-shadow: 0 4px 14px rgba(25, 135, 84, 0.35);
+    transform: translateY(-1px);
+}
+
+/* Action links styled as buttons in tables */
+.action-links a {
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.4rem;
+    transition: background 0.2s;
+}
+.action-links .btn-action-edit { color: #0d6efd; }
+.action-links .btn-action-edit:hover { background: #e7f1ff; }
+.action-links .btn-action-detail { color: #6c757d; }
+.action-links .btn-action-detail:hover { background: #f0f0f0; }
+.action-links .btn-action-delete { color: #dc3545; }
+.action-links .btn-action-delete:hover { background: #fde8ea; }
+
+/* --- Page Headers --- */
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+.page-header h1 {
+    font-size: 1.6rem;
+    margin-bottom: 0;
+    color: #1a1a2e;
+}
+.page-header .bi {
+    margin-right: 0.5rem;
+    opacity: 0.7;
+}
+
+/* --- Payment Form --- */
+.payment-card {
+    background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
+    border-radius: 1rem;
+    color: #fff;
+    padding: 1.5rem;
+}
+.payment-card .label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.7;
+}
+.payment-card .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+.payment-card .total-price {
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+/* --- Footer --- */
+footer.footer {
+    background: #1a1a2e;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 1.2rem 0;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+footer.footer a {
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+}
+footer.footer a:hover {
+    color: #fff;
+}
+
+/* --- Empty State --- */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #636e72;
+}
+.empty-state .bi {
+    font-size: 3rem;
+    opacity: 0.3;
+    display: block;
+    margin-bottom: 1rem;
+}
+.empty-state p {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+}
+
+/* --- Privacy / Info pages --- */
+.info-page {
+    max-width: 700px;
+}
+.info-page h1 {
+    margin-bottom: 1.5rem;
+}
+.info-page ul {
+    list-style: none;
+    padding: 0;
+}
+.info-page ul li {
+    padding: 0.6rem 0 0.6rem 1.5rem;
+    position: relative;
+}
+.info-page ul li::before {
+    content: "\2713";
+    position: absolute;
+    left: 0;
+    color: #198754;
+    font-weight: 700;
+}
+
+/* --- Animations --- */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.fade-in-up {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+/* --- Misc --- */
+.text-gradient {
+    background: linear-gradient(135deg, #0d6efd, #0f3460);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+.shadow-soft {
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
