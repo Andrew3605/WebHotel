@@ -3,6 +3,8 @@
 
 @{
     ViewData["Title"] = "Customer Requests";
+    var currentSearch = ViewBag.Search as string;
+    var selectedStatus = ViewBag.SelectedStatus as RequestStatus?;
 }
 
 <div class="page-header">
@@ -13,16 +15,32 @@
 <div class="card mb-4">
     <div class="card-body d-flex align-items-center gap-2 flex-wrap">
         <span class="fw-bold me-2"><i class="bi bi-funnel"></i> Filter:</span>
-        <a asp-action="Admin" class="btn btn-sm btn-outline-primary">All</a>
-        <a asp-action="Admin" asp-route-status="Pending" class="btn btn-sm btn-outline-warning">
+        <a asp-action="Admin" asp-route-search="@currentSearch" class="btn btn-sm btn-outline-primary">All</a>
+        <a asp-action="Admin" asp-route-status="Pending" asp-route-search="@currentSearch" class="btn btn-sm btn-outline-warning">
             <i class="bi bi-hourglass-split"></i> Pending
         </a>
-        <a asp-action="Admin" asp-route-status="Approved" class="btn btn-sm btn-outline-success">
+        <a asp-action="Admin" asp-route-status="Approved" asp-route-search="@currentSearch" class="btn btn-sm btn-outline-success">
             <i class="bi bi-check-circle"></i> Approved
         </a>
-        <a asp-action="Admin" asp-route-status="Rejected" class="btn btn-sm btn-outline-danger">
+        <a asp-action="Admin" asp-route-status="Rejected" asp-route-search="@currentSearch" class="btn btn-sm btn-outline-danger">
             <i class="bi bi-x-circle"></i> Rejected
         </a>
+
+        <form asp-action="Admin" method="get" class="d-flex align-items-center gap-2 flex-wrap ms-lg-3">
+            @if (selectedStatus.HasValue)
+            {
+                <input type="hidden" name="status" value="@selectedStatus.Value" />
+            }
+            <input type="text"
+                   name="search"
+                   value="@currentSearch"
+                   class="form-control form-control-sm"
+                   style="width: 220px;"
+                   placeholder="Search requests..." />
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search"></i> Search
+            </button>
+        </form>
 
         <div class="ms-auto">
             <form asp-action="ClearResolved" method="post" class="d-inline">

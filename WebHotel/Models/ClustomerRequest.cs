@@ -1,4 +1,4 @@
-﻿namespace WebHotel.Models
+namespace WebHotel.Models
 {
     public enum RequestType { NewBooking, ExtendStay, ChangeRoom, EarlyCheckout, OrderFood }
     public enum RequestStatus { Pending, Approved, Rejected }

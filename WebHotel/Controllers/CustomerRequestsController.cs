@@ -54,15 +54,46 @@ namespace WebHotel.Controllers
         public async Task<IActionResult> Create([Bind("Type,RoomId,BookingId,CheckIn,CheckOut,Message")] CustomerRequest r)
         {
             var u = await _users.GetUserAsync(User);
-            r.CustomerId = u?.CustomerId;
+            if (u?.CustomerId == null)
+                return Forbid();
+
+            r.CustomerId = u.CustomerId;
             r.Status = RequestStatus.Pending;
             r.CreatedAt = DateTime.UtcNow;
+            r.Message = string.IsNullOrWhiteSpace(r.Message) ? null : r.Message.Trim();
+
+            if (r.Message != null && r.Message.Length > 500)
+                ModelState.AddModelError(nameof(r.Message), "Notes cannot exceed 500 characters.");
 
             if (r.Type == RequestType.NewBooking)
             {
                 if (r.RoomId == null || r.CheckIn == null || r.CheckOut == null || r.CheckOut <= r.CheckIn)
                     ModelState.AddModelError(string.Empty, "Please choose a room and valid dates.");
             }
+
+            var pendingCount = await _db.CustomerRequests
+                .CountAsync(x => x.CustomerId == r.CustomerId && x.Status == RequestStatus.Pending);
+
+            if (pendingCount >= 5)
+                ModelState.AddModelError(string.Empty, "You already have 5 pending requests. Please wait for staff to review them before submitting more.");
+
+            var duplicateWindowStart = DateTime.UtcNow.AddMinutes(-10);
+            var normalizedMessage = r.Message?.ToLower();
+
+            var hasRecentDuplicate = await _db.CustomerRequests.AnyAsync(x =>
+                x.CustomerId == r.CustomerId &&
+                x.Status == RequestStatus.Pending &&
+                x.CreatedAt >= duplicateWindowStart &&
+                x.Type == r.Type &&
+                x.RoomId == r.RoomId &&
+                x.BookingId == r.BookingId &&
+                x.CheckIn == r.CheckIn &&
+                x.CheckOut == r.CheckOut &&
+                ((x.Message == null && r.Message == null) ||
+                 (x.Message != null && normalizedMessage != null && x.Message.ToLower() == normalizedMessage)));
+
+            if (hasRecentDuplicate)
+                ModelState.AddModelError(string.Empty, "A very similar request was already submitted recently. Please wait a few minutes before trying again.");
 
             if (!ModelState.IsValid)
             {
@@ -84,7 +115,10 @@ namespace WebHotel.Controllers
         public async Task<IActionResult> My()
         {
             var u = await _users.GetUserAsync(User);
-            var cid = u?.CustomerId;
+            if (u?.CustomerId == null)
+                return Forbid();
+
+            var cid = u.CustomerId;
 
             var list = await _db.CustomerRequests
                 .Where(x => x.CustomerId == cid)
@@ -96,19 +130,35 @@ namespace WebHotel.Controllers
 
         // ================ ADMIN =================
 
-        // GET: /CustomerRequests/Admin   (optionally filter by status)
-        // e.g. /CustomerRequests/Admin?status=Pending
+        // GET: /CustomerRequests/Admin   (optionally filter by status/search)
+        // e.g. /CustomerRequests/Admin?status=Pending&search=101
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Admin(RequestStatus? status = null)
+        public async Task<IActionResult> Admin(RequestStatus? status = null, string? search = null)
         {
             var q = _db.CustomerRequests.AsQueryable();
             if (status.HasValue) q = q.Where(r => r.Status == status.Value);
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim();
+                var normalized = term.ToLower();
+
+                q = q.Where(r =>
+                    (r.Message != null && r.Message.ToLower().Contains(normalized)) ||
+                    r.Id.ToString().Contains(term) ||
+                    (r.CustomerId.HasValue && r.CustomerId.Value.ToString().Contains(term)) ||
+                    (r.RoomId.HasValue && r.RoomId.Value.ToString().Contains(term)) ||
+                    r.Type.ToString().ToLower().Contains(normalized) ||
+                    r.Status.ToString().ToLower().Contains(normalized));
+            }
 
             var list = await q
                 .OrderBy(r => r.Status)
                 .ThenByDescending(r => r.CreatedAt)
                 .ToListAsync();
 
+            ViewBag.SelectedStatus = status;
+            ViewBag.Search = search;
             return View(list);
         }
 

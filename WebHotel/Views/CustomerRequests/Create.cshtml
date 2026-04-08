@@ -47,7 +47,12 @@
                         <label class="form-label fw-semibold">
                             <i class="bi bi-chat-left-text text-primary"></i> Notes (optional)
                         </label>
-                        <textarea class="form-control" asp-for="Message" rows="3" placeholder="Any special requests or notes..."></textarea>
+                        <textarea class="form-control"
+                                  asp-for="Message"
+                                  rows="3"
+                                  maxlength="500"
+                                  placeholder="Any special requests or notes..."></textarea>
+                        <span asp-validation-for="Message" class="text-danger small"></span>
                     </div>
 
                     <input type="hidden" asp-for="Type" value="NewBooking" />

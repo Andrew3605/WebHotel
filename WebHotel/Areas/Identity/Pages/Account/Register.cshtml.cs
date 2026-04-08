@@ -73,8 +73,7 @@ namespace WebHotel.Areas.Identity.Pages.Account
             var user = new ApplicationUser
             {
                 UserName = Input.Email,
-                Email = Input.Email,
-                EmailConfirmed = true
+                Email = Input.Email
             };
 
             var result = await _userManager.CreateAsync(user, Input.Password);

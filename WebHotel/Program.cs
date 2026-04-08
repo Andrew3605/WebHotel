@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 using WebHotel.Data;
 using WebHotel.Models;
 
@@ -18,12 +19,14 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(opts =>
 {
     opts.SignIn.RequireConfirmedAccount = false;
 
-    // Relax password policy for easy testing
-    opts.Password.RequiredLength = 6;
-    opts.Password.RequireDigit = false;
-    opts.Password.RequireLowercase = false;
-    opts.Password.RequireUppercase = false;
-    opts.Password.RequireNonAlphanumeric = false;
+    opts.Password.RequiredLength = 10;
+    opts.Password.RequireDigit = true;
+    opts.Password.RequireLowercase = true;
+    opts.Password.RequireUppercase = true;
+    opts.Password.RequireNonAlphanumeric = true;
+    opts.Lockout.AllowedForNewUsers = true;
+    opts.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+    opts.Lockout.MaxFailedAccessAttempts = 5;
 })
 .AddRoles<IdentityRole>()
 .AddEntityFrameworkStores<AppDbContext>();
@@ -55,6 +58,49 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+    {
+        var path = context.Request.Path.Value ?? string.Empty;
+
+        if (path.Equals("/Identity/Account/Register", StringComparison.OrdinalIgnoreCase) ||
+            path.Equals("/Identity/Account/Login", StringComparison.OrdinalIgnoreCase))
+        {
+            var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            return RateLimitPartition.GetFixedWindowLimiter(
+                $"auth:{ip}",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 10,
+                    Window = TimeSpan.FromMinutes(10),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                });
+        }
+
+        if (path.Equals("/CustomerRequests/Create", StringComparison.OrdinalIgnoreCase) &&
+            HttpMethods.IsPost(context.Request.Method))
+        {
+            var requester = context.User.Identity?.Name
+                ?? context.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown";
+
+            return RateLimitPartition.GetFixedWindowLimiter(
+                $"request:{requester}",
+                _ => new FixedWindowRateLimiterOptions
+                {
+                    PermitLimit = 5,
+                    Window = TimeSpan.FromMinutes(1),
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                    QueueLimit = 0
+                });
+        }
+
+        return RateLimitPartition.GetNoLimiter("unlimited");
+    });
+});
 
 var app = builder.Build();
 
@@ -69,6 +115,7 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -94,13 +141,18 @@ using (var scope = app.Services.CreateScope())
             await roleMgr.CreateAsync(new IdentityRole(r));
 
     // Admin user (only creates, doesn’t log in)
-    var adminEmail = "admin@hotel.local";
-    var admin = await userMgr.FindByEmailAsync(adminEmail);
-    if (admin == null)
+    var adminEmail = builder.Configuration["SeedAdmin:Email"];
+    var adminPassword = builder.Configuration["SeedAdmin:Password"];
+    if (!string.IsNullOrWhiteSpace(adminEmail) && !string.IsNullOrWhiteSpace(adminPassword))
     {
-        admin = new ApplicationUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
-        await userMgr.CreateAsync(admin, "Admin!123");
-        await userMgr.AddToRoleAsync(admin, "Admin");
+        var admin = await userMgr.FindByEmailAsync(adminEmail);
+        if (admin == null)
+        {
+            admin = new ApplicationUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
+            var createResult = await userMgr.CreateAsync(admin, adminPassword);
+            if (createResult.Succeeded)
+                await userMgr.AddToRoleAsync(admin, "Admin");
+        }
     }
 }
 // -------------------------------------------
