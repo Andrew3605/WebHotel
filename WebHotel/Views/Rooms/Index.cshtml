@@ -11,6 +11,29 @@
     </a>
 </div>
 
+<form method="get" asp-action="Index" class="card shadow-soft mb-3">
+    <div class="card-body p-3">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-8 col-lg-9">
+                <label for="room-search" class="form-label mb-1">Search Rooms</label>
+                <input id="room-search"
+                       name="search"
+                       value="@ViewData["CurrentSearch"]"
+                       class="form-control"
+                       placeholder="Search by room ID, room number, type, or capacity" />
+            </div>
+            <div class="col-md-4 col-lg-3 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">
+                    <i class="bi bi-search"></i> Search
+                </button>
+                <a asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
 <div class="table-responsive">
     <table class="table table-hover align-middle">
         <thead>
@@ -24,28 +47,42 @@
             </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model)
+            @if (Model.Any())
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-bold text-muted small">ID #@item.Id</div>
+                            <span class="fw-bold">@item.Number</span>
+                        </td>
+                        <td>
+                            <span class="badge @(item.Type == "Suite" ? "bg-warning text-dark" : item.Type == "Deluxe" ? "bg-info" : "bg-secondary")">
+                                @item.Type
+                            </span>
+                        </td>
+                        <td class="fw-semibold">@item.PricePerNight.ToString("C")</td>
+                        <td><i class="bi bi-people text-muted"></i> @item.Capacity</td>
+                        <td class="text-muted">@(item.Description?.Length > 50 ? item.Description[..50] + "..." : item.Description)</td>
+                        <td class="text-end action-links">
+                            <a class="btn-action-edit" asp-action="Edit" asp-route-id="@item.Id">
+                                <i class="bi bi-pencil"></i> Edit
+                            </a>
+                            <a class="btn-action-detail" asp-action="Details" asp-route-id="@item.Id">
+                                <i class="bi bi-eye"></i> Details
+                            </a>
+                            <a class="btn-action-delete" asp-action="Delete" asp-route-id="@item.Id">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
             {
                 <tr>
-                    <td><span class="fw-bold">@item.Number</span></td>
-                    <td>
-                        <span class="badge @(item.Type == "Suite" ? "bg-warning text-dark" : item.Type == "Deluxe" ? "bg-info" : "bg-secondary")">
-                            @item.Type
-                        </span>
-                    </td>
-                    <td class="fw-semibold">@item.PricePerNight.ToString("C")</td>
-                    <td><i class="bi bi-people text-muted"></i> @item.Capacity</td>
-                    <td class="text-muted">@(item.Description?.Length > 50 ? item.Description[..50] + "..." : item.Description)</td>
-                    <td class="text-end action-links">
-                        <a class="btn-action-edit" asp-action="Edit" asp-route-id="@item.Id">
-                            <i class="bi bi-pencil"></i> Edit
-                        </a>
-                        <a class="btn-action-detail" asp-action="Details" asp-route-id="@item.Id">
-                            <i class="bi bi-eye"></i> Details
-                        </a>
-                        <a class="btn-action-delete" asp-action="Delete" asp-route-id="@item.Id">
-                            <i class="bi bi-trash"></i> Delete
-                        </a>
+                    <td colspan="6" class="text-center py-4 text-muted">
+                        <i class="bi bi-search"></i> No rooms matched your search.
                     </td>
                 </tr>
             }

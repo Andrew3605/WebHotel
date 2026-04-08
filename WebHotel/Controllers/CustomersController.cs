@@ -26,9 +26,24 @@ namespace WebHotel.Controllers
         }
 
         // GET: Customers
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search)
         {
-            return View(await _context.Customers.ToListAsync());
+            var query = _context.Customers.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+                var normalized = search.ToLower();
+
+                query = query.Where(c =>
+                    c.FullName.ToLower().Contains(normalized) ||
+                    c.Email.ToLower().Contains(normalized) ||
+                    (c.Phone != null && c.Phone.Contains(search)) ||
+                    c.Id.ToString().Contains(search));
+            }
+
+            ViewData["CurrentSearch"] = search;
+            return View(await query.OrderBy(c => c.FullName).ToListAsync());
         }
 
         // GET: Customers/Details/5

@@ -13,8 +13,25 @@ namespace WebHotel.Controllers
         public RoomsController(AppDbContext context) => _context = context;
 
         // REMOVE [AllowAnonymous] here
-        public async Task<IActionResult> Index()
-            => View(await _context.Rooms.ToListAsync());
+        public async Task<IActionResult> Index(string? search)
+        {
+            var query = _context.Rooms.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+                var normalized = search.ToLower();
+
+                query = query.Where(r =>
+                    r.Number.ToLower().Contains(normalized) ||
+                    r.Type.ToLower().Contains(normalized) ||
+                    r.Id.ToString().Contains(search) ||
+                    r.Capacity.ToString().Contains(search));
+            }
+
+            ViewData["CurrentSearch"] = search;
+            return View(await query.OrderBy(r => r.Number).ToListAsync());
+        }
 
         // REMOVE [AllowAnonymous] here
         public async Task<IActionResult> Details(int? id)
