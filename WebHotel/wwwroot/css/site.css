@@ -81,8 +81,22 @@ h1, h2, h3 {
     gap: 0.25rem;
 }
 
-.user-nav-item {
-    margin-right: 0.5rem;
+.account-toggle {
+    padding: 0 !important;
+    text-decoration: none;
+    color: inherit;
+}
+
+.account-toggle::after {
+    margin-left: 0.65rem;
+    color: rgba(255, 255, 255, 0.65);
+}
+
+.account-toggle:hover,
+.account-toggle:focus,
+.account-toggle:active {
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 .user-chip {
@@ -95,18 +109,70 @@ h1, h2, h3 {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.account-toggle:hover .user-chip,
+.account-toggle:focus .user-chip {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
 .user-chip .badge {
     margin-left: 0.1rem;
     font-size: 0.68rem;
     letter-spacing: 0.04em;
 }
 
-.user-name {
+.account-label {
     display: inline-block;
-    max-width: 220px;
-    overflow: hidden;
-    text-overflow: ellipsis;
     vertical-align: bottom;
+}
+
+.account-menu {
+    min-width: 220px;
+    max-width: min(320px, calc(100vw - 1.5rem));
+    margin-top: 0.75rem;
+    border: 1px solid rgba(15, 52, 96, 0.1);
+    border-radius: 0.9rem;
+    padding: 0.5rem;
+    box-shadow: 0 18px 40px rgba(12, 16, 28, 0.18);
+}
+
+.account-menu-header {
+    padding: 0.45rem 0.8rem 0.2rem;
+}
+
+.account-menu-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #6c757d;
+    margin-bottom: 0.2rem;
+}
+
+.account-menu-email {
+    color: #1a1a2e;
+    font-weight: 600;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.account-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    border-radius: 0.65rem;
+    padding: 0.7rem 0.8rem;
+    font-weight: 500;
+}
+
+.account-menu .dropdown-item i {
+    color: #0f3460;
+}
+
+.account-menu #logout {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: 0;
 }
 
 @media (max-width: 1399.98px) {
@@ -119,9 +185,6 @@ h1, h2, h3 {
         font-size: 0.9rem;
     }
 
-    .user-name {
-        max-width: 180px;
-    }
 }
 
 @media (max-width: 1199.98px) {
@@ -134,13 +197,17 @@ h1, h2, h3 {
         gap: 0;
     }
 
-    .user-nav-item {
-        margin-right: 0;
-        margin-bottom: 0.35rem;
+    .account-toggle {
+        padding: 0.45rem 0 !important;
     }
 
     .user-chip {
         width: fit-content;
+    }
+
+    .account-menu {
+        min-width: 100%;
+        margin-top: 0.35rem;
     }
 }
 

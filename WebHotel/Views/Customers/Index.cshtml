@@ -11,6 +11,13 @@
     </a>
 </div>
 
+@if (TempData["StatusMessage"] is string statusMessage)
+{
+    <div class="alert alert-success shadow-soft" role="alert">
+        <i class="bi bi-check-circle"></i> @statusMessage
+    </div>
+}
+
 <div class="table-responsive">
     <table class="table table-hover align-middle">
         <thead>
@@ -37,6 +44,9 @@
                         </a>
                         <a class="btn-action-detail" asp-action="Details" asp-route-id="@item.Id">
                             <i class="bi bi-eye"></i> Details
+                        </a>
+                        <a class="btn-action-detail" asp-action="ResetPassword" asp-route-id="@item.Id">
+                            <i class="bi bi-key"></i> Reset Password
                         </a>
                         <a class="btn-action-delete" asp-action="Delete" asp-route-id="@item.Id">
                             <i class="bi bi-trash"></i> Delete

@@ -72,27 +72,9 @@
                             </li>
                         }
 
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="Home" asp-action="Privacy">
-                                <i class="bi bi-shield-check"></i> Privacy
-                            </a>
-                        </li>
                     </ul>
 
                     <ul class="navbar-nav account-nav align-items-xl-center">
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <li class="nav-item user-nav-item">
-                                <span class="navbar-text user-chip">
-                                    <i class="bi bi-person-circle"></i>
-                                    <span class="user-name">@User.Identity!.Name</span>
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <span class="badge bg-warning text-dark">Admin</span>
-                                    }
-                                </span>
-                            </li>
-                        }
                         <partial name="_LoginPartial" />
                     </ul>
                 </div>
