@@ -99,12 +99,38 @@ namespace WebHotel.Controllers
 
         // GET: Bookings
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string? search)
         {
-            var appDbContext = _context.Bookings
+            IQueryable<Booking> query = _context.Bookings
                 .Include(b => b.Customer)
                 .Include(b => b.Room);
-            return View(await appDbContext.ToListAsync());
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                search = search.Trim();
+                var normalized = search.ToLower();
+
+                query = query.Where(b =>
+                    b.Id.ToString().Contains(search) ||
+                    b.RoomId.ToString().Contains(search) ||
+                    b.CustomerId.ToString().Contains(search) ||
+                    (b.Customer != null && (
+                        b.Customer.Email.ToLower().Contains(normalized) ||
+                        b.Customer.FullName.ToLower().Contains(normalized))) ||
+                    (b.Room != null && (
+                        b.Room.Number.ToLower().Contains(normalized) ||
+                        b.Room.Type.ToLower().Contains(normalized))) ||
+                    b.CheckIn.ToString().Contains(search) ||
+                    b.CheckOut.ToString().Contains(search) ||
+                    (normalized == "paid" && b.IsPaid) ||
+                    (normalized == "unpaid" && !b.IsPaid));
+            }
+
+            ViewData["CurrentSearch"] = search;
+            return View(await query
+                .OrderByDescending(b => b.CheckIn)
+                .ThenByDescending(b => b.Id)
+                .ToListAsync());
         }
 
         // (Optional) Details page if you have the view
