@@ -34,6 +34,7 @@ namespace WebHotel.Controllers
 
             var bookings = await _context.Bookings
                 .Include(b => b.Room)
+                .Include(b => b.PaymentEntries)
                 .Where(b => b.CustomerId == user.CustomerId)
                 .OrderByDescending(b => b.CheckIn)
                 .ToListAsync();
@@ -103,7 +104,8 @@ namespace WebHotel.Controllers
         {
             IQueryable<Booking> query = _context.Bookings
                 .Include(b => b.Customer)
-                .Include(b => b.Room);
+                .Include(b => b.Room)
+                .Include(b => b.PaymentEntries);
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -142,6 +144,7 @@ namespace WebHotel.Controllers
             var booking = await _context.Bookings
                 .Include(b => b.Customer)
                 .Include(b => b.Room)
+                .Include(b => b.PaymentEntries)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (booking == null) return NotFound();
@@ -266,6 +269,7 @@ namespace WebHotel.Controllers
             var booking = await _context.Bookings
                 .Include(b => b.Customer)
                 .Include(b => b.Room)
+                .Include(b => b.PaymentEntries)
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (booking == null) return NotFound();
 

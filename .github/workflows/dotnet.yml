@@ -1,0 +1,29 @@
+name: .NET CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore WebHotel.sln
+
+      - name: Build
+        run: dotnet build WebHotel.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test WebHotel.Tests/WebHotel.Tests.csproj --configuration Release --no-build --logger "trx;LogFileName=test-results.trx"

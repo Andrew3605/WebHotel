@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using Microsoft.EntityFrameworkCore;
 
 namespace WebHotel.Models
 {
@@ -13,6 +14,7 @@ namespace WebHotel.Models
         public string Category { get; set; } = "";
 
         [Range(0, 100000)]
+        [Precision(18, 2)]
         public decimal Price { get; set; }
 
         [StringLength(500)]

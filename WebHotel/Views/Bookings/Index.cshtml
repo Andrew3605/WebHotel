@@ -53,6 +53,8 @@
             {
                 @foreach (var item in Model)
                 {
+                    var balanceDue = item.BalanceDue;
+
                     <tr>
                         <td>
                             <div class="fw-bold text-muted small">Booking ID #@item.Id</div>
@@ -66,7 +68,13 @@
                         </td>
                         <td>@item.CheckIn.ToString("MMM dd, yyyy")</td>
                         <td>@item.CheckOut.ToString("MMM dd, yyyy")</td>
-                        <td class="fw-bold">@item.TotalPrice.ToString("C")</td>
+                        <td class="fw-bold">
+                            <div>@item.TotalPrice.ToString("C")</div>
+                            @if (item.ExtraCharges > 0)
+                            {
+                                <div class="small text-muted">+ charges @item.ExtraCharges.ToString("C")</div>
+                            }
+                        </td>
                         <td>
                             @if (item.IsPaid)
                             {
@@ -76,6 +84,7 @@
                             {
                                 <span class="badge bg-danger"><i class="bi bi-clock"></i> Unpaid</span>
                             }
+                            <div class="small text-muted mt-1">Due @balanceDue.ToString("C")</div>
                         </td>
                         <td class="text-muted">@item.CreatedAt.ToString("MMM dd, yyyy")</td>
                         <td class="text-end action-links">
@@ -84,6 +93,9 @@
                             </a>
                             <a class="btn-action-detail" asp-action="Details" asp-route-id="@item.Id">
                                 <i class="bi bi-eye"></i> Details
+                            </a>
+                            <a class="btn-action-detail" asp-controller="Payments" asp-action="Statement" asp-route-bookingId="@item.Id">
+                                <i class="bi bi-receipt"></i> Statement
                             </a>
                             <a class="btn-action-delete" asp-action="Delete" asp-route-id="@item.Id">
                                 <i class="bi bi-trash"></i> Delete

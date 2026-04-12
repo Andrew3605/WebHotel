@@ -1,5 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using WebHotel.Services;
 
 namespace WebHotel.Models
 {
@@ -27,5 +29,19 @@ namespace WebHotel.Models
         public bool IsPaid { get; set; } = false;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        public ICollection<PaymentEntry> PaymentEntries { get; set; } = new List<PaymentEntry>();
+
+        [NotMapped]
+        public decimal ExtraCharges => BookingPaymentCalculator.GetExtraCharges(PaymentEntries);
+
+        [NotMapped]
+        public decimal PaymentsReceived => BookingPaymentCalculator.GetPaymentsReceived(PaymentEntries);
+
+        [NotMapped]
+        public decimal RefundTotal => BookingPaymentCalculator.GetRefundTotal(PaymentEntries);
+
+        [NotMapped]
+        public decimal BalanceDue => BookingPaymentCalculator.GetBalanceDue(TotalPrice, PaymentEntries);
     }
 }

@@ -12,6 +12,7 @@ namespace WebHotel.Data
         public DbSet<Customer> Customers => Set<Customer>();
         public DbSet<Room> Rooms => Set<Room>();
         public DbSet<Booking> Bookings => Set<Booking>();
+        public DbSet<PaymentEntry> PaymentEntries => Set<PaymentEntry>();
         public DbSet<Product> Products => Set<Product>();
         public DbSet<CustomerRequest> CustomerRequests => Set<CustomerRequest>();
 

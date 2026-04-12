@@ -56,5 +56,6 @@
 </div>
 <div>
     <a asp-action="Edit" asp-route-id="@Model?.Id">Edit</a> |
+    <a asp-controller="Payments" asp-action="Statement" asp-route-bookingId="@Model?.Id">Statement</a> |
     <a asp-action="Index">Back to List</a>
 </div>

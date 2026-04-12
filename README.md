@@ -7,6 +7,7 @@ WebHotel is an ASP.NET Core MVC hotel booking system built with role-based acces
 - Customer registration and login with ASP.NET Core Identity
 - Room browsing and booking management
 - Customer request submission and admin review workflow
+- Booking statement workflow with deposits, extra charges, refunds, and payment history
 - Product and customer administration
 - Role-based navigation and protected admin features
 
@@ -15,6 +16,8 @@ WebHotel is an ASP.NET Core MVC hotel booking system built with role-based acces
 - ASP.NET Core MVC
 - C#
 - Entity Framework Core
+- xUnit
+- GitHub Actions
 - SQL Server
 - Razor Views
 - Bootstrap
@@ -42,6 +45,17 @@ This account can be used to explore admin features such as booking management, c
 - If the admin account already exists in the local database, startup will not overwrite it.
 - If the seeded admin login does not work, remove the local database and run the project again, or update the existing admin user manually.
 - The seeded admin account is intended for local showcase and testing in Development only.
+
+## Privacy Note
+
+- This project is a demonstration application and stores standard demo account and booking information such as customer name, email, phone number, booking details, and customer requests.
+- Passwords are managed through ASP.NET Core Identity rather than stored in plain text.
+- The payment flow is a demo workflow. Full card details such as complete card number and CVV are not persisted to the database.
+
+## Quality
+
+- Automated tests cover booking payment calculations and core billing rules.
+- GitHub Actions runs restore, build, and test checks on pushes and pull requests to `main`.
 
 ## Security
 
