@@ -1,0 +1,160 @@
+@model WebHotel.Models.ChatSession
+@using WebHotel.Models
+@{
+    ViewData["Title"] = $"Chat with {Model.CustomerName}";
+}
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-headset"></i>
+                    <strong>@Model.CustomerName</strong>
+                    <span class="ms-2 badge @(Model.Status == ChatSessionStatus.Active ? "bg-success" : Model.Status == ChatSessionStatus.Waiting ? "bg-warning text-dark" : "bg-secondary")">
+                        @Model.Status
+                    </span>
+                </div>
+                <div>
+                    @if (Model.Status != ChatSessionStatus.Closed)
+                    {
+                        <button id="btn-close-chat" class="btn btn-sm btn-outline-light">
+                            <i class="bi bi-x-circle"></i> Close Chat
+                        </button>
+                    }
+                    <a asp-action="Index" class="btn btn-sm btn-outline-light ms-1">
+                        <i class="bi bi-arrow-left"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+
+            <div id="chat-messages" class="card-body" style="height:450px;overflow-y:auto;background:#f8f9fa;">
+                @foreach (var msg in Model.Messages)
+                {
+                    var alignment = msg.SenderRole == ChatSenderRole.Customer ? "left" : "right";
+                    var bgColor = msg.SenderRole switch
+                    {
+                        ChatSenderRole.Customer => "white",
+                        ChatSenderRole.Bot => "#e3f2fd",
+                        ChatSenderRole.Staff => "#1f77b4",
+                        _ => "#f0f0f0"
+                    };
+                    var textColor = msg.SenderRole == ChatSenderRole.Staff ? "white" : "inherit";
+                    var icon = msg.SenderRole switch
+                    {
+                        ChatSenderRole.Customer => "bi-person",
+                        ChatSenderRole.Bot => "bi-robot",
+                        ChatSenderRole.Staff => "bi-headset",
+                        _ => "bi-info-circle"
+                    };
+
+                    <div class="mb-2" style="text-align:@alignment;">
+                        <div class="d-inline-block rounded-3 px-3 py-2 shadow-sm"
+                             style="max-width:80%;background:@bgColor;color:@textColor;">
+                            <small class="d-block mb-1 @(msg.SenderRole == ChatSenderRole.Staff ? "text-white-50" : "text-muted")">
+                                <i class="bi @icon"></i> @msg.SenderName
+                                <span class="ms-1">@msg.SentAt.ToLocalTime().ToString("HH:mm")</span>
+                            </small>
+                            @msg.Content
+                        </div>
+                    </div>
+                }
+            </div>
+
+            @if (Model.Status != ChatSessionStatus.Closed)
+            {
+                <div class="card-footer bg-white p-2">
+                    <form id="staff-chat-form" class="d-flex gap-2">
+                        <input id="staff-chat-input" type="text" class="form-control" placeholder="Type your reply..."
+                               autocomplete="off" autofocus />
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-send-fill"></i> Send
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="card-footer bg-light text-center text-muted">
+                    <i class="bi bi-lock"></i> This chat session is closed.
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+    (function() {
+        var sessionId = @Model.Id;
+        var messages = document.getElementById('chat-messages');
+        var form = document.getElementById('staff-chat-form');
+        var input = document.getElementById('staff-chat-input');
+        var closeBtn = document.getElementById('btn-close-chat');
+
+        messages.scrollTop = messages.scrollHeight;
+
+        var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+
+        function addMessage(data) {
+            var alignment = data.senderRole === 'Customer' ? 'left' : 'right';
+            var bg = data.senderRole === 'Customer' ? 'white'
+                   : data.senderRole === 'Bot' ? '#e3f2fd'
+                   : data.senderRole === 'Staff' ? '#1f77b4'
+                   : '#f0f0f0';
+            var color = data.senderRole === 'Staff' ? 'white' : 'inherit';
+            var labelClass = data.senderRole === 'Staff' ? 'text-white-50' : 'text-muted';
+            var icon = data.senderRole === 'Customer' ? 'bi-person'
+                     : data.senderRole === 'Bot' ? 'bi-robot'
+                     : data.senderRole === 'Staff' ? 'bi-headset'
+                     : 'bi-info-circle';
+
+            var time = new Date(data.sentAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+            var div = document.createElement('div');
+            div.className = 'mb-2';
+            div.style.textAlign = alignment;
+            div.innerHTML =
+                '<div class="d-inline-block rounded-3 px-3 py-2 shadow-sm" style="max-width:80%;background:' + bg + ';color:' + color + ';">' +
+                    '<small class="d-block mb-1 ' + labelClass + '">' +
+                        '<i class="bi ' + icon + '"></i> ' + (data.senderName || data.senderRole) +
+                        ' <span class="ms-1">' + time + '</span>' +
+                    '</small>' +
+                    data.content +
+                '</div>';
+            messages.appendChild(div);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        connection.on("ReceiveMessage", addMessage);
+
+        connection.on("SessionClosed", function() {
+            if (form) form.innerHTML = '<div class="text-center text-muted"><i class="bi bi-lock"></i> Chat closed.</div>';
+            if (closeBtn) closeBtn.style.display = 'none';
+        });
+
+        connection.start().then(function() {
+            connection.invoke("JoinChat", sessionId);
+        });
+
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                var msg = input.value.trim();
+                if (!msg) return;
+                input.value = '';
+                connection.invoke("SendStaffMessage", sessionId, msg);
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function() {
+                if (confirm('Close this chat session?')) {
+                    connection.invoke("StaffCloseSession", sessionId);
+                }
+            });
+        }
+    })();
+    </script>
+}

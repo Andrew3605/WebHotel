@@ -105,6 +105,30 @@ namespace WebHotel.Controllers
             return View(vm);
         }
 
+        // GET: /Home/AuditLog
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AuditLog(string? search, int page = 1)
+        {
+            const int pageSize = 20;
+            var query = _db.AuditLogs.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var s = search.Trim().ToLower();
+                query = query.Where(a =>
+                    a.Action.ToLower().Contains(s) ||
+                    a.EntityType.ToLower().Contains(s) ||
+                    a.PerformedBy.ToLower().Contains(s) ||
+                    (a.Details != null && a.Details.ToLower().Contains(s)) ||
+                    (a.UserRole != null && a.UserRole.ToLower().Contains(s)));
+            }
+
+            ViewData["CurrentSearch"] = search;
+            var ordered = query.OrderByDescending(a => a.PerformedAt);
+            var paginated = await PaginatedList<AuditLog>.CreateAsync(ordered, page, pageSize);
+            return View(paginated);
+        }
+
         [AllowAnonymous]
         public IActionResult Privacy()
         {

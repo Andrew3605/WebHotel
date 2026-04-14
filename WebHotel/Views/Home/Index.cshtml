@@ -84,7 +84,7 @@
                         {
                             <p class="text-muted small mb-3 flex-grow-1">@r.Description</p>
                         }
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2 border-top">
                             @if (User.IsInRole("Customer"))
                             {
                                 <a class="btn btn-primary w-100"
@@ -100,6 +100,15 @@
                             {
                                 <a class="btn btn-outline-secondary w-100 disabled">
                                     <i class="bi bi-lock"></i> Login to request
+                                </a>
+                            }
+                            else
+                            {
+                                <a class="btn btn-outline-primary w-100"
+                                   asp-controller="Rooms"
+                                   asp-action="Details"
+                                   asp-route-id="@r.Id">
+                                    <i class="bi bi-eye"></i> View Details
                                 </a>
                             }
                         </div>

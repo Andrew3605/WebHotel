@@ -15,6 +15,9 @@ namespace WebHotel.Data
         public DbSet<PaymentEntry> PaymentEntries => Set<PaymentEntry>();
         public DbSet<Product> Products => Set<Product>();
         public DbSet<CustomerRequest> CustomerRequests => Set<CustomerRequest>();
+        public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+        public DbSet<ChatSession> ChatSessions => Set<ChatSession>();
+        public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
 
     }
 }

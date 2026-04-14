@@ -30,6 +30,9 @@ namespace WebHotel.Models
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        [Timestamp]
+        public byte[]? RowVersion { get; set; }
+
         public ICollection<PaymentEntry> PaymentEntries { get; set; } = new List<PaymentEntry>();
 
         [NotMapped]

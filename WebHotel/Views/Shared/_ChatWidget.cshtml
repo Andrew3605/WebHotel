@@ -1,0 +1,240 @@
+@* Floating chat widget for customers — bot + live staff escalation via SignalR *@
+<div id="chat-widget" style="position:fixed;bottom:24px;right:24px;z-index:1050;">
+    <!-- Toggle Button -->
+    <button id="chat-toggle" class="btn btn-primary rounded-circle shadow-lg"
+            style="width:56px;height:56px;font-size:1.5rem;" title="Chat with us">
+        <i class="bi bi-chat-dots-fill"></i>
+    </button>
+
+    <!-- Chat Panel -->
+    <div id="chat-panel" class="card shadow-lg"
+         style="display:none;width:380px;max-height:520px;position:absolute;bottom:70px;right:0;border-radius:16px;overflow:hidden;">
+
+        <div id="chat-header" class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2 px-3">
+            <span id="chat-header-text"><i class="bi bi-robot"></i> Hotel Assistant</span>
+            <div>
+                <button id="chat-new" class="btn btn-sm btn-link text-white p-0 me-2" style="display:none;font-size:0.8rem;" title="New chat">
+                    <i class="bi bi-plus-circle"></i>
+                </button>
+                <button id="chat-close" class="btn btn-sm btn-link text-white p-0" style="font-size:1.2rem;">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="chat-messages" class="card-body p-3" style="height:340px;overflow-y:auto;background:#f8f9fa;">
+            <div class="chat-msg bot mb-2">
+                <div class="d-inline-block bg-white rounded-3 px-3 py-2 shadow-sm" style="max-width:85%;">
+                    <small class="text-muted d-block mb-1"><i class="bi bi-robot"></i> Assistant</small>
+                    Hello! I'm the WebHotel assistant. Ask me about bookings, payments, check-in/out, room changes, or hotel facilities.
+                    If I can't help, you can request to chat with a staff member!
+                </div>
+            </div>
+        </div>
+
+        <!-- Escalation banner (hidden by default) -->
+        <div id="chat-escalation-bar" class="bg-light border-top px-3 py-2 text-center" style="display:none;">
+            <small class="text-muted">Not finding what you need?</small>
+            <button id="btn-talk-to-staff" class="btn btn-sm btn-warning ms-2">
+                <i class="bi bi-headset"></i> Talk to Staff
+            </button>
+        </div>
+
+        <!-- Waiting banner -->
+        <div id="chat-waiting-bar" class="bg-warning bg-opacity-25 border-top px-3 py-2 text-center" style="display:none;">
+            <div class="spinner-border spinner-border-sm text-warning me-1" role="status"></div>
+            <small>Waiting for a staff member to join...</small>
+        </div>
+
+        <div class="card-footer p-2 bg-white">
+            <form id="chat-form" class="d-flex gap-2">
+                <input id="chat-input" type="text" class="form-control form-control-sm"
+                       placeholder="Type your question..." autocomplete="off" />
+                <button type="submit" class="btn btn-primary btn-sm px-3">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+<script>
+(function() {
+    var toggle = document.getElementById('chat-toggle');
+    var panel = document.getElementById('chat-panel');
+    var closeBtn = document.getElementById('chat-close');
+    var newBtn = document.getElementById('chat-new');
+    var form = document.getElementById('chat-form');
+    var input = document.getElementById('chat-input');
+    var messages = document.getElementById('chat-messages');
+    var headerText = document.getElementById('chat-header-text');
+    var header = document.getElementById('chat-header');
+    var escalationBar = document.getElementById('chat-escalation-bar');
+    var waitingBar = document.getElementById('chat-waiting-bar');
+    var btnTalkToStaff = document.getElementById('btn-talk-to-staff');
+
+    var sessionId = null;
+    var mode = 'bot'; // 'bot', 'waiting', 'live', 'closed'
+    var botMessageCount = 0;
+    var connection = null;
+    var connected = false;
+
+    toggle.addEventListener('click', function() {
+        var visible = panel.style.display !== 'none';
+        panel.style.display = visible ? 'none' : 'flex';
+        panel.style.flexDirection = 'column';
+        if (!visible) {
+            input.focus();
+            if (!connected) connectSignalR();
+        }
+    });
+
+    closeBtn.addEventListener('click', function() { panel.style.display = 'none'; });
+
+    // ─── Message rendering ───
+
+    function addMessage(text, senderRole, senderName) {
+        var isUser = senderRole === 'Customer';
+        var div = document.createElement('div');
+        div.className = 'chat-msg mb-2';
+        div.style.textAlign = isUser ? 'right' : 'left';
+
+        var bubble = document.createElement('div');
+        bubble.className = 'd-inline-block rounded-3 px-3 py-2 shadow-sm';
+        bubble.style.maxWidth = '85%';
+
+        if (senderRole === 'Staff') {
+            bubble.style.background = '#198754';
+            bubble.style.color = 'white';
+        } else if (isUser) {
+            bubble.style.background = '#1f77b4';
+            bubble.style.color = 'white';
+        } else if (senderRole === 'System') {
+            bubble.style.background = '#f0f0f0';
+            bubble.style.fontStyle = 'italic';
+        } else {
+            bubble.style.background = 'white';
+        }
+
+        if (!isUser) {
+            var label = document.createElement('small');
+            label.className = senderRole === 'Staff' ? 'text-white-50 d-block mb-1' : 'text-muted d-block mb-1';
+            var icon = senderRole === 'Staff' ? 'bi-headset' : senderRole === 'System' ? 'bi-info-circle' : 'bi-robot';
+            label.innerHTML = '<i class="bi ' + icon + '"></i> ' + (senderName || senderRole);
+            bubble.appendChild(label);
+        }
+
+        var textNode = document.createTextNode(text);
+        bubble.appendChild(textNode);
+        div.appendChild(bubble);
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    // ─── SignalR connection ───
+
+    function connectSignalR() {
+        connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").withAutomaticReconnect().build();
+
+        connection.on("ReceiveMessage", function(data) {
+            addMessage(data.content, data.senderRole, data.senderName);
+
+            // After 2 bot replies, show escalation option
+            if (data.senderRole === 'Bot') {
+                botMessageCount++;
+                if (botMessageCount >= 2 && mode === 'bot') {
+                    escalationBar.style.display = 'block';
+                }
+            }
+        });
+
+        connection.on("StaffJoined", function(data) {
+            mode = 'live';
+            waitingBar.style.display = 'none';
+            escalationBar.style.display = 'none';
+            headerText.innerHTML = '<i class="bi bi-headset"></i> Live Chat — ' + data.staffName;
+            header.className = 'card-header bg-success text-white d-flex justify-content-between align-items-center py-2 px-3';
+            input.placeholder = 'Type your message...';
+            input.focus();
+        });
+
+        connection.on("SessionClosed", function() {
+            mode = 'closed';
+            waitingBar.style.display = 'none';
+            escalationBar.style.display = 'none';
+            headerText.innerHTML = '<i class="bi bi-chat-square-text"></i> Chat Ended';
+            header.className = 'card-header bg-secondary text-white d-flex justify-content-between align-items-center py-2 px-3';
+            input.disabled = true;
+            input.placeholder = 'Chat ended';
+            newBtn.style.display = 'inline';
+        });
+
+        connection.start().then(function() {
+            connected = true;
+            return connection.invoke("StartSession");
+        }).then(function(id) {
+            sessionId = id;
+        }).catch(function(err) {
+            console.error("SignalR error:", err);
+        });
+    }
+
+    // ─── Send message ───
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var msg = input.value.trim();
+        if (!msg || !sessionId || mode === 'closed') return;
+
+        if (mode === 'bot' || mode === 'live') {
+            addMessage(msg, 'Customer', null);
+            input.value = '';
+            connection.invoke("SendCustomerMessage", sessionId, msg).catch(function(err) {
+                addMessage('Failed to send. Please try again.', 'System', 'System');
+            });
+        } else if (mode === 'waiting') {
+            // Still send to hub so staff sees it when they join
+            addMessage(msg, 'Customer', null);
+            input.value = '';
+            connection.invoke("SendCustomerMessage", sessionId, msg);
+        }
+    });
+
+    // ─── Escalation ───
+
+    btnTalkToStaff.addEventListener('click', function() {
+        if (!sessionId) return;
+        mode = 'waiting';
+        escalationBar.style.display = 'none';
+        waitingBar.style.display = 'block';
+        headerText.innerHTML = '<i class="bi bi-headset"></i> Connecting to Staff...';
+        connection.invoke("RequestStaff", sessionId);
+    });
+
+    // ─── New chat (after close) ───
+
+    newBtn.addEventListener('click', function() {
+        // Reset everything
+        messages.innerHTML = '';
+        mode = 'bot';
+        botMessageCount = 0;
+        sessionId = null;
+        input.disabled = false;
+        input.placeholder = 'Type your question...';
+        newBtn.style.display = 'none';
+        headerText.innerHTML = '<i class="bi bi-robot"></i> Hotel Assistant';
+        header.className = 'card-header bg-primary text-white d-flex justify-content-between align-items-center py-2 px-3';
+        escalationBar.style.display = 'none';
+        waitingBar.style.display = 'none';
+
+        addMessage(
+            "Hello! I'm the WebHotel assistant. Ask me about bookings, payments, check-in/out, room changes, or hotel facilities. If I can't help, you can request to chat with a staff member!",
+            'Bot', 'Assistant'
+        );
+
+        connection.invoke("StartSession").then(function(id) { sessionId = id; });
+        input.focus();
+    });
+})();
+</script>

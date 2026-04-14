@@ -8,21 +8,24 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebHotel.Data;
 using WebHotel.Models;
+using WebHotel.Services;
 using WebHotel.ViewModels;
 
 namespace WebHotel.Controllers
 {
-    // Customers can access only the My() page; Admin can access everything
-    [Authorize(Roles = "Customer,Admin")]
+    // Customers: My() page only; Admin + Staff: full booking management
+    [Authorize(Roles = "Customer,Admin,Staff")]
     public class BookingsController : Controller
     {
         private readonly AppDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAuditService _audit;
 
-        public BookingsController(AppDbContext context, UserManager<ApplicationUser> userManager)
+        public BookingsController(AppDbContext context, UserManager<ApplicationUser> userManager, IAuditService audit)
         {
             _context = context;
             _userManager = userManager;
+            _audit = audit;
         }
 
         // ---------------- CUSTOMER PAGE ----------------
@@ -100,7 +103,7 @@ namespace WebHotel.Controllers
         // ---------------- ADMIN PAGES -------------------
 
         // GET: Bookings?search=foo&page=2
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Index(string? search, int page = 1)
         {
             const int pageSize = 10;
@@ -138,7 +141,7 @@ namespace WebHotel.Controllers
         }
 
         // (Optional) Details page if you have the view
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -154,7 +157,7 @@ namespace WebHotel.Controllers
         }
 
         // GET: Bookings/Create
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public IActionResult Create(int? roomId, DateTime? checkIn, DateTime? checkOut, int? customerId)
         {
             ViewData["CustomerId"] = new SelectList(_context.Customers, "Id", "FullName", customerId);
@@ -173,7 +176,7 @@ namespace WebHotel.Controllers
         // POST: Bookings/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Create([Bind("Id,CustomerId,RoomId,CheckIn,CheckOut,TotalPrice,IsPaid,CreatedAt")] Booking booking)
         {
             if (booking.CheckOut.Date <= booking.CheckIn.Date)
@@ -195,6 +198,8 @@ namespace WebHotel.Controllers
 
                 _context.Add(booking);
                 await _context.SaveChangesAsync();
+                await _audit.LogAsync("Booking.Create", "Booking", booking.Id,
+                    $"Room {booking.RoomId}, Customer {booking.CustomerId}, {booking.CheckIn:d}-{booking.CheckOut:d}", User);
                 return RedirectToAction(nameof(Index));
             }
 
@@ -204,7 +209,7 @@ namespace WebHotel.Controllers
         }
 
         // GET: Bookings/Edit/5
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -223,8 +228,8 @@ namespace WebHotel.Controllers
         // POST: Bookings/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,CustomerId,RoomId,CheckIn,CheckOut,TotalPrice,IsPaid,CreatedAt")] Booking booking)
+        [Authorize(Roles = "Admin,Staff")]
+        public async Task<IActionResult> Edit(int id, [Bind("Id,CustomerId,RoomId,CheckIn,CheckOut,TotalPrice,IsPaid,CreatedAt,RowVersion")] Booking booking)
         {
             if (id != booking.Id) return NotFound();
 
@@ -248,12 +253,15 @@ namespace WebHotel.Controllers
 
                     _context.Update(booking);
                     await _context.SaveChangesAsync();
+                    await _audit.LogAsync("Booking.Edit", "Booking", booking.Id,
+                        $"Room {booking.RoomId}, {booking.CheckIn:d}-{booking.CheckOut:d}, Total {booking.TotalPrice:C}", User);
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
                     if (!await _context.Bookings.AnyAsync(e => e.Id == booking.Id)) return NotFound();
-                    throw;
+                    ModelState.AddModelError(string.Empty,
+                        "This booking was modified by another user. Please reload and try again.");
                 }
             }
 
@@ -286,7 +294,11 @@ namespace WebHotel.Controllers
         {
             var booking = await _context.Bookings.FindAsync(id);
             if (booking != null)
+            {
+                await _audit.LogAsync("Booking.Delete", "Booking", id,
+                    $"Room {booking.RoomId}, Customer {booking.CustomerId}", User);
                 _context.Bookings.Remove(booking);
+            }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));

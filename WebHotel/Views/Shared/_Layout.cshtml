@@ -36,6 +36,10 @@
                                     <i class="bi bi-speedometer2"></i> Dashboard
                                 </a>
                             </li>
+                        }
+
+                        @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+                        {
                             <li class="nav-item">
                                 <a class="nav-link" asp-controller="CustomerRequests" asp-action="Admin">
                                     <i class="bi bi-inbox"></i> Requests
@@ -47,6 +51,20 @@
                                 </a>
                             </li>
                             <li class="nav-item">
+                                <a class="nav-link" asp-controller="StaffChat" asp-action="Index">
+                                    <i class="bi bi-headset"></i> Live Chat
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Customers" asp-action="Index">
+                                    <i class="bi bi-people"></i> Customers
+                                </a>
+                            </li>
+                        }
+
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <li class="nav-item">
                                 <a class="nav-link" asp-controller="Rooms" asp-action="Index">
                                     <i class="bi bi-door-open"></i> Rooms
                                 </a>
@@ -57,8 +75,8 @@
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Customers" asp-action="Index">
-                                    <i class="bi bi-people"></i> Customers
+                                <a class="nav-link" asp-controller="Home" asp-action="AuditLog">
+                                    <i class="bi bi-journal-text"></i> Audit Log
                                 </a>
                             </li>
                         }
@@ -101,6 +119,11 @@
             </a>
         </div>
     </footer>
+
+    @if (User.IsInRole("Customer"))
+    {
+        <partial name="_ChatWidget" />
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>

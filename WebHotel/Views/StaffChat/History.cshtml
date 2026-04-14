@@ -1,0 +1,79 @@
+@model List<WebHotel.Models.ChatSession>
+@{
+    ViewData["Title"] = "Chat History";
+    var page = (int)(ViewData["Page"] ?? 1);
+    var totalPages = (int)(ViewData["TotalPages"] ?? 1);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-clock-history"></i> Chat History</h2>
+    <a asp-action="Index" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-headset"></i> Live Dashboard
+    </a>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Staff</th>
+                <th>Messages</th>
+                <th>Started</th>
+                <th>Closed</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var session in Model)
+            {
+                var lastMsg = session.Messages.FirstOrDefault();
+                <tr>
+                    <td>@session.Id</td>
+                    <td class="fw-semibold">@session.CustomerName</td>
+                    <td class="small text-muted">@(session.StaffName ?? "Bot only")</td>
+                    <td>
+                        @if (lastMsg != null)
+                        {
+                            <span class="small text-muted" style="max-width:200px;display:inline-block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                                @lastMsg.Content
+                            </span>
+                        }
+                    </td>
+                    <td class="small">@session.CreatedAt.ToLocalTime().ToString("MMM dd, HH:mm")</td>
+                    <td class="small">@(session.ClosedAt?.ToLocalTime().ToString("MMM dd, HH:mm") ?? "-")</td>
+                    <td>
+                        <a asp-action="Chat" asp-route-id="@session.Id" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i> View
+                        </a>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any())
+            {
+                <tr><td colspan="7" class="text-center py-4 text-muted">No chat history yet.</td></tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalPages > 1)
+{
+    <nav>
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(page <= 1 ? "disabled" : "")">
+                <a class="page-link" asp-action="History" asp-route-page="@(page - 1)">Previous</a>
+            </li>
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == page ? "active" : "")">
+                    <a class="page-link" asp-action="History" asp-route-page="@i">@i</a>
+                </li>
+            }
+            <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                <a class="page-link" asp-action="History" asp-route-page="@(page + 1)">Next</a>
+            </li>
+        </ul>
+    </nav>
+}

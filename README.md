@@ -1,14 +1,19 @@
 # WebHotel
 
-WebHotel is an ASP.NET Core MVC hotel booking system built with role-based access for customers and admins. It includes booking workflows, request handling, product management, account administration, a REST API with Swagger documentation, Docker support, structured logging, an admin dashboard with analytics, and email notifications.
+WebHotel is an ASP.NET Core MVC hotel booking system built with three-tier role-based access (Admin, Staff, Customer). It includes booking workflows, request handling, room service ordering, product management, account administration, a REST API with Swagger documentation, Docker support, structured logging, an admin dashboard with analytics, email notifications, an AI-powered customer chat helper, and a comprehensive audit trail.
 
 ## Highlights
 
 - Customer registration and login with ASP.NET Core Identity
+- Three-tier role hierarchy: Admin > Staff > Customer with granular permissions
 - Room browsing and booking management
-- Customer request submission and admin review workflow
+- Customer request submission and admin/staff review workflow
 - Booking statement workflow with deposits, extra charges, refunds, and payment history
+- Room service ordering: staff can charge products from the catalog directly to bookings
 - Product and customer administration
+- AI-powered customer chat helper with live staff escalation via SignalR
+- Audit logging for all admin/staff actions (create, edit, delete, approve, reject)
+- Optimistic concurrency control on bookings (RowVersion timestamp)
 - Role-based navigation and protected admin features
 - REST API with Swagger/OpenAPI documentation
 - Docker and Docker Compose for containerized deployment
@@ -29,6 +34,7 @@ WebHotel is an ASP.NET Core MVC hotel booking system built with role-based acces
 - Razor Views + Bootstrap
 - REST API + Swagger/OpenAPI (Swashbuckle)
 - Serilog (structured logging)
+- SignalR (real-time live chat)
 - Chart.js (admin dashboard charts)
 - SMTP email notifications
 - Docker + Docker Compose
@@ -56,6 +62,27 @@ This starts:
 - **WebHotel** app on port 8080
 
 The app auto-applies migrations and seeds the demo admin account.
+
+## Roles and Permissions
+
+The system uses a three-tier role hierarchy:
+
+| Feature | Admin | Staff | Customer |
+|---------|:-----:|:-----:|:--------:|
+| Dashboard & analytics | Yes | - | - |
+| Manage rooms & products | Yes | - | - |
+| View audit log | Yes | - | - |
+| Delete bookings/customers | Yes | - | - |
+| Create/edit bookings | Yes | Yes | - |
+| Manage customer requests | Yes | Yes | - |
+| Room service (charge products) | Yes | Yes | - |
+| View customers list | Yes | Yes | - |
+| Front desk payments/charges | Yes | Yes | - |
+| Live chat dashboard (answer customers) | Yes | Yes | - |
+| Browse rooms & book online | - | - | Yes |
+| View own bookings & pay online | - | - | Yes |
+| Submit requests | - | - | Yes |
+| AI chat helper | - | - | Yes |
 
 ## Demo Access
 
@@ -115,6 +142,49 @@ The system sends HTML email notifications at key workflow points:
 - **Request status update** when an admin approves or rejects a customer request
 
 Email is configured via SMTP settings in `appsettings.json`. Delivery failures are logged but do not block the user workflow.
+
+## Room Service
+
+Staff and admins can charge products from the hotel catalog directly to a guest's booking:
+
+1. Navigate to a booking's **Statement** page
+2. Click **Room Service** to browse the product catalog
+3. Filter by category, set quantity, and add an optional note
+4. Each charge creates a `PaymentEntry` of type `Charge` linked to the booking
+5. Charges appear on the booking statement and update the balance due automatically
+
+## AI Customer Chat + Live Staff Escalation
+
+Logged-in customers have access to a floating chat widget with two modes:
+
+### Bot Mode
+- Answers common hotel questions (bookings, payments, check-in/out, room types, WiFi, parking, pool, pricing)
+- Keyword-matching FAQ engine behind an `IChatBotService` interface
+- Easily swappable to a real AI provider (OpenAI, Azure AI, etc.) by implementing the same interface
+
+### Live Staff Chat (SignalR)
+- After the bot replies twice, a **"Talk to Staff"** button appears
+- Clicking it places the customer in a queue and notifies staff in real time
+- Staff see waiting chats on the **Live Chat Dashboard** (`/StaffChat`) with audio notifications
+- Staff can pick up, reply in real time, and close sessions
+- All messages (bot + staff + customer) are persisted to the database
+- Chat history is viewable at `/StaffChat/History`
+- Built with **ASP.NET Core SignalR** for real-time WebSocket communication
+
+## Audit Logging
+
+All admin and staff actions are recorded in a searchable audit log:
+
+- Tracks action type, entity, user, role, and timestamp
+- Covers booking CRUD, customer request approvals/rejections, payment entries, and room service charges
+- Searchable and paginated at `/Home/AuditLog` (Admin only)
+
+## Concurrency Control
+
+Bookings use optimistic concurrency with a `[Timestamp]` RowVersion column:
+
+- If two users edit the same booking simultaneously, the second save is rejected with a user-friendly message
+- The user is prompted to reload and retry, preventing silent data overwrites
 
 ## Customer Request Workflow
 

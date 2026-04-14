@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebHotel.Data;
 
@@ -11,9 +12,11 @@ using WebHotel.Data;
 namespace WebHotel.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260414081752_AddBookingRowVersion")]
+    partial class AddBookingRowVersion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -309,79 +312,6 @@ namespace WebHotel.Migrations
                     b.ToTable("Bookings");
                 });
 
-            modelBuilder.Entity("WebHotel.Models.ChatMessage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ChatSessionId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Content")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<string>("SenderName")
-                        .HasMaxLength(120)
-                        .HasColumnType("nvarchar(120)");
-
-                    b.Property<int>("SenderRole")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("SentAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ChatSessionId");
-
-                    b.ToTable("ChatMessages");
-                });
-
-            modelBuilder.Entity("WebHotel.Models.ChatSession", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("ClosedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("CustomerId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CustomerName")
-                        .IsRequired()
-                        .HasMaxLength(120)
-                        .HasColumnType("nvarchar(120)");
-
-                    b.Property<string>("StaffName")
-                        .HasMaxLength(120)
-                        .HasColumnType("nvarchar(120)");
-
-                    b.Property<string>("StaffUserId")
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CustomerId");
-
-                    b.ToTable("ChatSessions");
-                });
-
             modelBuilder.Entity("WebHotel.Models.Customer", b =>
                 {
                     b.Property<int>("Id")
@@ -638,28 +568,6 @@ namespace WebHotel.Migrations
                     b.Navigation("Room");
                 });
 
-            modelBuilder.Entity("WebHotel.Models.ChatMessage", b =>
-                {
-                    b.HasOne("WebHotel.Models.ChatSession", "ChatSession")
-                        .WithMany("Messages")
-                        .HasForeignKey("ChatSessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("ChatSession");
-                });
-
-            modelBuilder.Entity("WebHotel.Models.ChatSession", b =>
-                {
-                    b.HasOne("WebHotel.Models.Customer", "Customer")
-                        .WithMany()
-                        .HasForeignKey("CustomerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Customer");
-                });
-
             modelBuilder.Entity("WebHotel.Models.PaymentEntry", b =>
                 {
                     b.HasOne("WebHotel.Models.Booking", "Booking")
@@ -674,11 +582,6 @@ namespace WebHotel.Migrations
             modelBuilder.Entity("WebHotel.Models.Booking", b =>
                 {
                     b.Navigation("PaymentEntries");
-                });
-
-            modelBuilder.Entity("WebHotel.Models.ChatSession", b =>
-                {
-                    b.Navigation("Messages");
                 });
 #pragma warning restore 612, 618
         }

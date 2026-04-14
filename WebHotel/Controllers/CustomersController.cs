@@ -13,7 +13,7 @@ using WebHotel.ViewModels;
 
 namespace WebHotel.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,Staff")]
     public class CustomersController : Controller
     {
         private readonly AppDbContext _context;
@@ -68,6 +68,7 @@ namespace WebHotel.Controllers
         }
 
         // GET: Customers/Create
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             return View();
@@ -78,6 +79,7 @@ namespace WebHotel.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Create([Bind("Id,FullName,Email,Phone")] Customer customer)
         {
             if (ModelState.IsValid)
@@ -90,6 +92,7 @@ namespace WebHotel.Controllers
         }
 
         // GET: Customers/Edit/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
@@ -110,6 +113,7 @@ namespace WebHotel.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Edit(int id, [Bind("Id,FullName,Email,Phone")] Customer customer)
         {
             if (id != customer.Id)
@@ -141,6 +145,7 @@ namespace WebHotel.Controllers
         }
 
         // GET: Customers/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -159,6 +164,7 @@ namespace WebHotel.Controllers
         }
 
         // GET: Customers/ResetPassword/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ResetPassword(int? id)
         {
             if (id == null)
@@ -179,6 +185,7 @@ namespace WebHotel.Controllers
         // POST: Customers/ResetPassword/5
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> ResetPassword(int id, AdminResetCustomerPasswordVm model)
         {
             if (id != model.CustomerId)
@@ -227,6 +234,7 @@ namespace WebHotel.Controllers
         // POST: Customers/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var customer = await _context.Customers.FindAsync(id);

@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using WebHotel.Data;
 using WebHotel.Models;
 using WebHotel.Services;
+// Audit and email services injected via constructor
 
 namespace WebHotel.Controllers
 {
@@ -18,12 +19,15 @@ namespace WebHotel.Controllers
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _users;
         private readonly IHotelEmailSender _email;
+        private readonly IAuditService _audit;
 
-        public CustomerRequestsController(AppDbContext db, UserManager<ApplicationUser> users, IHotelEmailSender email)
+        public CustomerRequestsController(AppDbContext db, UserManager<ApplicationUser> users,
+            IHotelEmailSender email, IAuditService audit)
         {
             _db = db;
             _users = users;
             _email = email;
+            _audit = audit;
         }
 
         // =============== CUSTOMER ===============
@@ -135,7 +139,7 @@ namespace WebHotel.Controllers
 
         // GET: /CustomerRequests/Admin   (optionally filter by status/search)
         // e.g. /CustomerRequests/Admin?status=Pending&search=101
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Admin(RequestStatus? status = null, string? search = null)
         {
             var q = _db.CustomerRequests.AsQueryable();
@@ -168,7 +172,7 @@ namespace WebHotel.Controllers
         // POST: /CustomerRequests/Approve/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Approve(int id)
         {
             var r = await _db.CustomerRequests.FindAsync(id);
@@ -223,13 +227,16 @@ namespace WebHotel.Controllers
                 }
             }
 
+            await _audit.LogAsync("Request.Approve", "CustomerRequest", r.Id,
+                $"{r.Type} for Customer #{r.CustomerId}", User);
+
             return RedirectToAction(nameof(Admin));
         }
 
         // POST: /CustomerRequests/Reject/5
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> Reject(int id)
         {
             var r = await _db.CustomerRequests.FindAsync(id);
@@ -246,6 +253,9 @@ namespace WebHotel.Controllers
                     await _email.SendRequestStatusAsync(customer.Email, customer.FullName,
                         r.Type.ToString(), "Rejected");
             }
+
+            await _audit.LogAsync("Request.Reject", "CustomerRequest", r.Id,
+                $"{r.Type} for Customer #{r.CustomerId}", User);
 
             return RedirectToAction(nameof(Admin));
         }

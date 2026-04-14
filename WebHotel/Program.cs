@@ -21,6 +21,9 @@ builder.Host.UseSerilog((context, config) => config
 // MVC + API
 builder.Services.AddControllersWithViews();
 
+// SignalR for live chat
+builder.Services.AddSignalR();
+
 // Swagger / OpenAPI
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -40,6 +43,12 @@ var smtpSettings = builder.Configuration.GetSection("Smtp").Get<WebHotel.Service
     ?? new WebHotel.Services.SmtpSettings();
 builder.Services.AddSingleton(smtpSettings);
 builder.Services.AddSingleton<WebHotel.Services.IHotelEmailSender, WebHotel.Services.SmtpEmailSender>();
+
+// Chat bot service (swap with AI provider for production)
+builder.Services.AddSingleton<WebHotel.Services.IChatBotService, WebHotel.Services.FaqChatBotService>();
+
+// Audit logging service
+builder.Services.AddScoped<WebHotel.Services.IAuditService, WebHotel.Services.AuditService>();
 
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -167,6 +176,7 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
+app.MapHub<WebHotel.Hubs.ChatHub>("/chatHub");
 
 // ---- migrate DB, then seed roles/admin ----
 using (var scope = app.Services.CreateScope())
@@ -178,7 +188,7 @@ using (var scope = app.Services.CreateScope())
     var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
     // Roles
-    foreach (var r in new[] { "Admin", "Customer" })
+    foreach (var r in new[] { "Admin", "Staff", "Customer" })
         if (!await roleMgr.RoleExistsAsync(r))
             await roleMgr.CreateAsync(new IdentityRole(r));
 

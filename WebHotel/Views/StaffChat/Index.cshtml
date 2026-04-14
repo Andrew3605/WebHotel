@@ -1,0 +1,109 @@
+@model List<WebHotel.Models.ChatSession>
+@using WebHotel.Models
+@{
+    ViewData["Title"] = "Live Chat Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="bi bi-headset"></i> Live Chat Dashboard</h2>
+    <a asp-action="History" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-clock-history"></i> Chat History
+    </a>
+</div>
+
+<div id="chat-dashboard">
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info" id="no-chats-msg">
+            <i class="bi bi-chat-square-text"></i> No active or waiting chats right now. This page updates in real time.
+        </div>
+    }
+
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3" id="chat-list">
+        @foreach (var session in Model)
+        {
+            var lastMsg = session.Messages.FirstOrDefault();
+            var statusBadge = session.Status == ChatSessionStatus.Waiting
+                ? "bg-warning text-dark"
+                : "bg-success";
+            var statusText = session.Status == ChatSessionStatus.Waiting ? "Waiting" : "Active";
+
+            <div class="col" data-session-id="@session.Id">
+                <div class="card h-100 @(session.Status == ChatSessionStatus.Waiting ? "border-warning" : "")">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="card-title mb-0">@session.CustomerName</h5>
+                                <small class="text-muted">Session #@session.Id</small>
+                            </div>
+                            <span class="badge @statusBadge">@statusText</span>
+                        </div>
+                        @if (lastMsg != null)
+                        {
+                            <p class="card-text text-muted small mb-2" style="max-height:40px;overflow:hidden;">
+                                <strong>@lastMsg.SenderRole:</strong> @lastMsg.Content
+                            </p>
+                        }
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">@session.CreatedAt.ToLocalTime().ToString("MMM dd, HH:mm")</small>
+                            <a asp-action="Chat" asp-route-id="@session.Id" class="btn btn-sm btn-primary">
+                                <i class="bi bi-chat-dots"></i> @(session.Status == ChatSessionStatus.Waiting ? "Pick Up" : "Continue")
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
+    <script>
+    (function() {
+        var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+        var chatList = document.getElementById('chat-list');
+        var noChatsMsg = document.getElementById('no-chats-msg');
+
+        connection.on("NewChatWaiting", function(data) {
+            if (noChatsMsg) noChatsMsg.style.display = 'none';
+
+            var col = document.createElement('div');
+            col.className = 'col';
+            col.setAttribute('data-session-id', data.sessionId);
+            col.innerHTML =
+                '<div class="card h-100 border-warning">' +
+                    '<div class="card-body">' +
+                        '<div class="d-flex justify-content-between align-items-start mb-2">' +
+                            '<div><h5 class="card-title mb-0">' + data.customerName + '</h5>' +
+                            '<small class="text-muted">Session #' + data.sessionId + '</small></div>' +
+                            '<span class="badge bg-warning text-dark">Waiting</span>' +
+                        '</div>' +
+                        '<div class="d-flex justify-content-between align-items-center">' +
+                            '<small class="text-muted">Just now</small>' +
+                            '<a href="/StaffChat/Chat/' + data.sessionId + '" class="btn btn-sm btn-primary">' +
+                                '<i class="bi bi-chat-dots"></i> Pick Up</a>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>';
+            chatList.prepend(col);
+
+            // Play a subtle notification sound effect via Web Audio API
+            try {
+                var ctx = new (window.AudioContext || window.webkitAudioContext)();
+                var osc = ctx.createOscillator(); osc.frequency.value = 600;
+                osc.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.15);
+            } catch(e) {}
+        });
+
+        connection.on("ChatPickedUp", function(sessionId) {
+            var el = chatList.querySelector('[data-session-id="' + sessionId + '"]');
+            if (el) el.remove();
+        });
+
+        connection.start().then(function() {
+            connection.invoke("JoinStaffDashboard");
+        });
+    })();
+    </script>
+}

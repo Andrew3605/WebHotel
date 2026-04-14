@@ -79,6 +79,14 @@
                         <i class="bi bi-credit-card"></i> Pay Online
                     </a>
                 }
+
+                @if (Model.CanManageFrontDesk)
+                {
+                    <a asp-controller="RoomService" asp-action="Order" asp-route-bookingId="@Model.BookingId"
+                       class="btn btn-outline-primary w-100 mt-2">
+                        <i class="bi bi-cup-hot"></i> Room Service
+                    </a>
+                }
             </div>
         </div>
     </div>

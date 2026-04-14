@@ -15,12 +15,15 @@ namespace WebHotel.Controllers
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _users;
         private readonly IHotelEmailSender _email;
+        private readonly IAuditService _audit;
 
-        public PaymentsController(AppDbContext db, UserManager<ApplicationUser> users, IHotelEmailSender email)
+        public PaymentsController(AppDbContext db, UserManager<ApplicationUser> users,
+            IHotelEmailSender email, IAuditService audit)
         {
             _db = db;
             _users = users;
             _email = email;
+            _audit = audit;
         }
 
         [Authorize(Roles = "Customer")]
@@ -100,18 +103,18 @@ namespace WebHotel.Controllers
             return RedirectToAction(nameof(Statement), new { bookingId = booking.Id });
         }
 
-        [Authorize(Roles = "Customer,Admin")]
+        [Authorize(Roles = "Customer,Admin,Staff")]
         public async Task<IActionResult> Statement(int bookingId)
         {
             var booking = await LoadBookingForCurrentUserAsync(bookingId);
             if (booking == null) return NotFound();
 
-            return View(BuildStatementVm(booking, User.IsInRole("Admin")));
+            return View(BuildStatementVm(booking, User.IsInRole("Admin") || User.IsInRole("Staff")));
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         public async Task<IActionResult> DeskEntry(FrontDeskEntryVm vm)
         {
             var booking = await LoadAdminBookingAsync(vm.BookingId);
@@ -157,6 +160,9 @@ namespace WebHotel.Controllers
             UpdateBookingPaymentStatus(booking);
 
             await _db.SaveChangesAsync();
+
+            await _audit.LogAsync($"Payment.{vm.Type}", "PaymentEntry", entry.Id,
+                $"Booking #{booking.Id}, {vm.Amount:C} via {vm.Method}", User);
 
             TempData["PaymentOk"] = vm.Type switch
             {
