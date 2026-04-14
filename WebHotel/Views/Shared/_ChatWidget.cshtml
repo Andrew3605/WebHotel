@@ -173,8 +173,41 @@
         connection.start().then(function() {
             connected = true;
             return connection.invoke("StartSession");
-        }).then(function(id) {
-            sessionId = id;
+        }).then(function(result) {
+            sessionId = result.sessionId;
+
+            // If there are existing messages, clear the static greeting and render history
+            if (result.messages && result.messages.length > 0) {
+                messages.innerHTML = '';
+                result.messages.forEach(function(m) {
+                    addMessage(m.content, m.senderRole, m.senderName);
+                    if (m.senderRole === 'Bot') botMessageCount++;
+                });
+            }
+
+            // Restore UI state based on session status
+            if (result.status === 'Waiting') {
+                mode = 'waiting';
+                escalationBar.style.display = 'none';
+                waitingBar.style.display = 'block';
+                headerText.innerHTML = '<i class="bi bi-headset"></i> Connecting to Staff...';
+            } else if (result.status === 'Active') {
+                mode = 'live';
+                waitingBar.style.display = 'none';
+                escalationBar.style.display = 'none';
+                headerText.innerHTML = '<i class="bi bi-headset"></i> Live Chat' + (result.staffName ? ' — ' + result.staffName : '');
+                header.className = 'card-header bg-success text-white d-flex justify-content-between align-items-center py-2 px-3';
+                input.placeholder = 'Type your message...';
+            } else if (result.status === 'Closed') {
+                mode = 'closed';
+                input.disabled = true;
+                input.placeholder = 'Chat ended';
+                newBtn.style.display = 'inline';
+                headerText.innerHTML = '<i class="bi bi-chat-square-text"></i> Chat Ended';
+                header.className = 'card-header bg-secondary text-white d-flex justify-content-between align-items-center py-2 px-3';
+            } else if (botMessageCount >= 2) {
+                escalationBar.style.display = 'block';
+            }
         }).catch(function(err) {
             console.error("SignalR error:", err);
         });

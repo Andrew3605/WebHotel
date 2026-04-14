@@ -1,6 +1,6 @@
 # WebHotel
 
-WebHotel is an ASP.NET Core MVC hotel booking system built with three-tier role-based access (Admin, Staff, Customer). It includes booking workflows, request handling, room service ordering, product management, account administration, a REST API with Swagger documentation, Docker support, structured logging, an admin dashboard with analytics, email notifications, an AI-powered customer chat helper, and a comprehensive audit trail.
+WebHotel is an ASP.NET Core MVC hotel booking system built with three-tier role-based access (Admin, Staff, Customer). It includes booking workflows, request handling, room service ordering, product management, account administration, a REST API with Swagger documentation, Docker support, structured logging, an admin dashboard with analytics, email notifications, an AI-powered customer chat helper with live staff escalation, a staff help guide bot, admin-managed staff accounts, and a comprehensive audit trail.
 
 ## Highlights
 
@@ -12,6 +12,10 @@ WebHotel is an ASP.NET Core MVC hotel booking system built with three-tier role-
 - Room service ordering: staff can charge products from the catalog directly to bookings
 - Product and customer administration
 - AI-powered customer chat helper with live staff escalation via SignalR
+- Chat history restored on login — customers see previous messages after logging out and back in
+- Staff help guide bot — floating widget for staff/admin explaining how the system works
+- Admin-managed staff accounts — create and delete Staff logins from the UI
+- Cleaned-up admin navbar with grouped Manage dropdown and visible Logout button
 - Audit logging for all admin/staff actions (create, edit, delete, approve, reject)
 - Optimistic concurrency control on bookings (RowVersion timestamp)
 - Role-based navigation and protected admin features
@@ -82,7 +86,9 @@ The system uses a three-tier role hierarchy:
 | Browse rooms & book online | - | - | Yes |
 | View own bookings & pay online | - | - | Yes |
 | Submit requests | - | - | Yes |
-| AI chat helper | - | - | Yes |
+| AI chat helper (customer bot + live staff) | - | - | Yes |
+| Staff help guide bot | Yes | Yes | - |
+| Create / delete staff accounts | Yes | - | - |
 
 ## Demo Access
 
@@ -158,9 +164,10 @@ Staff and admins can charge products from the hotel catalog directly to a guest'
 Logged-in customers have access to a floating chat widget with two modes:
 
 ### Bot Mode
-- Answers common hotel questions (bookings, payments, check-in/out, room types, WiFi, parking, pool, pricing)
-- Keyword-matching FAQ engine behind an `IChatBotService` interface
-- Easily swappable to a real AI provider (OpenAI, Azure AI, etc.) by implementing the same interface
+- Answers 30+ hotel topics: bookings, payments, check-in/out, room types, amenities, WiFi, parking, pool, gym, spa, laundry, food/restaurant, accessibility, noise complaints, lost & found, account/password help, and more
+- Phrase-priority keyword matching engine — longer phrases score higher so "reset password" never accidentally matches WiFi
+- Pluggable behind an `IChatBotService` interface — swap to any AI provider (Groq, OpenAI, Gemini, etc.) without touching the hub or widget
+- Chat history is restored on login — customers see their full previous conversation after logging out and back in
 
 ### Live Staff Chat (SignalR)
 - After the bot replies twice, a **"Talk to Staff"** button appears
@@ -170,6 +177,34 @@ Logged-in customers have access to a floating chat widget with two modes:
 - All messages (bot + staff + customer) are persisted to the database
 - Chat history is viewable at `/StaffChat/History`
 - Built with **ASP.NET Core SignalR** for real-time WebSocket communication
+
+## Staff Help Guide
+
+Staff and admin users have a floating **yellow `?` button** in the bottom-right corner of every page. Clicking it opens an interactive help bot that explains how the WebHotel system works — no AI, no external calls, no charges.
+
+Topics covered:
+- How to approve or reject customer requests
+- How to create, edit, and delete bookings
+- How the live chat system works and how to pick up a waiting customer
+- How to view and search customers
+- How to reset a customer password
+- How to add, edit, and delete rooms and products (Admin)
+- How to create and delete staff accounts (Admin)
+- How to use the dashboard and audit log (Admin)
+- How payments, deposits, and email notifications work
+
+The widget is invisible to customers — only Staff and Admin roles see it.
+
+## Staff Account Management
+
+Admins can create and delete Staff accounts directly from **Manage → Staff Accounts** without needing database access or configuration files:
+
+1. Go to **Manage → Staff Accounts**
+2. Click **New Staff Account**
+3. Enter the staff member's email and a password
+4. The account is created immediately with the Staff role
+
+The page also shows a full permissions breakdown — what Staff can and cannot do — for easy reference.
 
 ## Audit Logging
 

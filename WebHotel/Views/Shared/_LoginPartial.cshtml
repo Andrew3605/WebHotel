@@ -6,41 +6,20 @@
 
 @if (SignInManager.IsSignedIn(User))
 {
-    <li class="nav-item dropdown">
-        <button class="nav-link btn btn-link border-0 account-toggle dropdown-toggle"
-                id="accountMenu"
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false">
-            <span class="user-chip">
-                <i class="bi bi-person-circle"></i>
-                <span class="account-label">Account</span>
-                @if (User.IsInRole("Admin"))
-                {
-                    <span class="badge bg-warning text-dark">Admin</span>
-                }
-            </span>
-        </button>
-        <ul class="dropdown-menu dropdown-menu-end account-menu" aria-labelledby="accountMenu">
-            <li class="account-menu-header">
-                <div class="account-menu-title">Signed in as</div>
-                <div class="account-menu-email">@User.Identity?.Name</div>
-            </li>
-            <li><hr class="dropdown-divider" /></li>
-            <li>
-                <a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage account">
-                    <i class="bi bi-gear"></i> Manage Profile
-                </a>
-            </li>
-            <li><hr class="dropdown-divider" /></li>
-            <li>
-                <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                    <button id="logout" type="submit" class="dropdown-item">
-                        <i class="bi bi-box-arrow-right"></i> Logout
-                    </button>
-                </form>
-            </li>
-        </ul>
+    <li class="nav-item d-flex align-items-center gap-2 ms-2">
+        <a class="nav-link px-0 d-flex align-items-center gap-1" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage profile">
+            <i class="bi bi-person-circle"></i>
+            <span class="d-none d-xl-inline">@User.Identity?.Name</span>
+            @if (User.IsInRole("Admin"))
+            {
+                <span class="badge bg-warning text-dark">Admin</span>
+            }
+        </a>
+        <form id="logoutForm" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
+            <button type="submit" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </form>
     </li>
 }
 else

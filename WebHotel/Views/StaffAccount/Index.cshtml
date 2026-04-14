@@ -1,0 +1,100 @@
+@model List<WebHotel.Models.ApplicationUser>
+@{
+    ViewData["Title"] = "Staff Accounts";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2><i class="bi bi-person-badge"></i> Staff Accounts</h2>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-person-plus"></i> New Staff Account
+    </a>
+</div>
+
+@if (TempData["StatusMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["StatusMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card border-success h-100">
+            <div class="card-header bg-success text-white">
+                <i class="bi bi-check-circle"></i> Staff Can Do
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><i class="bi bi-headset text-success me-2"></i>Handle live customer chat</li>
+                <li class="list-group-item"><i class="bi bi-inbox text-success me-2"></i>View, approve &amp; reject customer requests</li>
+                <li class="list-group-item"><i class="bi bi-calendar-check text-success me-2"></i>View &amp; create &amp; edit bookings</li>
+                <li class="list-group-item"><i class="bi bi-people text-success me-2"></i>View customer list &amp; details</li>
+                <li class="list-group-item"><i class="bi bi-credit-card text-success me-2"></i>View payment statements</li>
+                <li class="list-group-item"><i class="bi bi-bell text-success me-2"></i>Access room service orders</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-danger h-100">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-x-circle"></i> Staff Cannot Do (Admin Only)
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><i class="bi bi-speedometer2 text-danger me-2"></i>View analytics dashboard</li>
+                <li class="list-group-item"><i class="bi bi-door-open text-danger me-2"></i>Create / edit / delete rooms</li>
+                <li class="list-group-item"><i class="bi bi-box-seam text-danger me-2"></i>Manage products</li>
+                <li class="list-group-item"><i class="bi bi-person-badge text-danger me-2"></i>Create / delete staff accounts</li>
+                <li class="list-group-item"><i class="bi bi-person-x text-danger me-2"></i>Create, edit, delete or reset customer accounts</li>
+                <li class="list-group-item"><i class="bi bi-trash text-danger me-2"></i>Delete bookings or requests</li>
+                <li class="list-group-item"><i class="bi bi-journal-text text-danger me-2"></i>View audit log</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No staff accounts yet.</div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Email</th>
+                    <th>Email Confirmed</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td><i class="bi bi-person-circle me-1 text-muted"></i>@user.Email</td>
+                        <td>
+                            @if (user.EmailConfirmed)
+                            {
+                                <span class="badge bg-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">No</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <form asp-action="Delete" method="post" style="display:inline;"
+                                  onsubmit="return confirm('Delete staff account @user.Email?');">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@user.Id" />
+                                <button type="submit" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

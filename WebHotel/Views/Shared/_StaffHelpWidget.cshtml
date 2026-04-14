@@ -1,0 +1,259 @@
+@* Floating help widget for Staff and Admin — rule-based, no AI, no external calls *@
+<div id="help-widget" style="position:fixed;bottom:24px;right:24px;z-index:1050;">
+
+    <button id="help-toggle" class="btn btn-warning rounded-circle shadow-lg"
+            style="width:56px;height:56px;font-size:1.4rem;" title="Staff Help">
+        <i class="bi bi-question-circle-fill"></i>
+    </button>
+
+    <div id="help-panel" class="card shadow-lg"
+         style="display:none;width:400px;max-height:540px;position:absolute;bottom:70px;right:0;border-radius:16px;overflow:hidden;flex-direction:column;">
+
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center py-2 px-3">
+            <span><i class="bi bi-question-circle"></i> Staff Help Guide</span>
+            <button id="help-close" class="btn btn-sm btn-link text-dark p-0" style="font-size:1.2rem;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div id="help-messages" class="card-body p-3" style="height:360px;overflow-y:auto;background:#fffdf0;">
+            <div class="chat-msg mb-2">
+                <div class="d-inline-block bg-white rounded-3 px-3 py-2 shadow-sm" style="max-width:90%;">
+                    <small class="text-muted d-block mb-1"><i class="bi bi-question-circle"></i> Help Bot</small>
+                    Hi! I'm the staff help guide for WebHotel. Ask me anything about how the system works.<br><br>
+                    Try asking things like:<br>
+                    • <a href="#" class="help-suggestion">How do I approve a request?</a><br>
+                    • <a href="#" class="help-suggestion">How do I create a booking?</a><br>
+                    • <a href="#" class="help-suggestion">How does live chat work?</a><br>
+                    • <a href="#" class="help-suggestion">What can staff do?</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer p-2 bg-white">
+            <form id="help-form" class="d-flex gap-2">
+                <input id="help-input" type="text" class="form-control form-control-sm"
+                       placeholder="Ask about the system..." autocomplete="off" />
+                <button type="submit" class="btn btn-warning btn-sm px-3">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    var toggle = document.getElementById('help-toggle');
+    var panel = document.getElementById('help-panel');
+    var closeBtn = document.getElementById('help-close');
+    var form = document.getElementById('help-form');
+    var input = document.getElementById('help-input');
+    var messages = document.getElementById('help-messages');
+
+    toggle.addEventListener('click', function () {
+        var visible = panel.style.display !== 'none';
+        panel.style.display = visible ? 'none' : 'flex';
+        if (!visible) input.focus();
+    });
+
+    closeBtn.addEventListener('click', function () { panel.style.display = 'none'; });
+
+    // Suggestion links
+    document.querySelectorAll('.help-suggestion').forEach(function (link) {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            var q = this.textContent;
+            addMessage(q, true);
+            addMessage(getResponse(q), false);
+        });
+    });
+
+    function addMessage(text, isUser) {
+        var div = document.createElement('div');
+        div.className = 'chat-msg mb-2';
+        div.style.textAlign = isUser ? 'right' : 'left';
+
+        var bubble = document.createElement('div');
+        bubble.className = 'd-inline-block rounded-3 px-3 py-2 shadow-sm';
+        bubble.style.maxWidth = '90%';
+        bubble.style.whiteSpace = 'pre-line';
+
+        if (isUser) {
+            bubble.style.background = '#856404';
+            bubble.style.color = 'white';
+        } else {
+            bubble.style.background = 'white';
+            var label = document.createElement('small');
+            label.className = 'text-muted d-block mb-1';
+            label.innerHTML = '<i class="bi bi-question-circle"></i> Help Bot';
+            bubble.appendChild(label);
+        }
+
+        // Render **bold** markdown simply
+        var content = document.createElement('span');
+        content.innerHTML = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+        bubble.appendChild(content);
+        div.appendChild(bubble);
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var msg = input.value.trim();
+        if (!msg) return;
+        addMessage(msg, true);
+        input.value = '';
+        addMessage(getResponse(msg), false);
+    });
+
+    // ── FAQ Data ─────────────────────────────────────────────────────────────
+    var faqs = [
+
+        // ── Requests ──────────────────────────────────────────────────────────
+        { p: ["approve a request", "approve request", "how to approve", "reject a request", "reject request", "how to reject", "handle a request", "process a request", "review request"],
+          k: ["approve", "reject", "request"],
+          r: "**How to handle Customer Requests:**\n\n1. Click **Manage → Requests** in the top menu\n2. You'll see all Pending requests — each shows the customer name, request type, and date\n3. Click **Details** on any request to see the full info\n4. Choose **Approve** or **Reject**\n5. You can add a note explaining your decision — the customer gets an email notification automatically\n\nRequest types: New Booking, Extend Stay, Change Room, Early Checkout, Order Food." },
+
+        { p: ["what is a request", "what are requests", "types of requests", "request types"],
+          k: ["requests"],
+          r: "Customers submit **Requests** to communicate their needs. There are 5 types:\n\n• **New Booking** — customer wants to book a room\n• **Extend Stay** — customer wants extra nights\n• **Change Room** — customer wants to switch to a different room\n• **Early Checkout** — customer wants to leave early or cancel\n• **Order Food** — customer is ordering room service\n\nAll requests show up under **Manage → Requests**. You approve or reject each one, and the customer gets emailed automatically." },
+
+        // ── Bookings ──────────────────────────────────────────────────────────
+        { p: ["create a booking", "how to create booking", "new booking", "make a booking", "add a booking"],
+          k: ["create", "booking"],
+          r: "**How to create a booking (as Staff/Admin):**\n\n1. Click **Bookings** in the top menu\n2. Click the **Create** button\n3. Fill in the customer, room, check-in/out dates, and number of guests\n4. Save — the booking is created immediately (no approval step needed when you create it directly)\n\nAlternatively, if a customer submits a 'New Booking' request, approve it from **Manage → Requests** and the booking is created automatically." },
+
+        { p: ["view bookings", "see all bookings", "booking list", "find a booking", "search bookings"],
+          k: ["bookings"],
+          r: "**Viewing bookings:**\n\nGo to **Bookings** in the top menu to see all bookings. You can:\n• Search by customer name or room\n• Filter by status (Pending, Confirmed, Checked In, etc.)\n• Click a booking to see full details, edit it, or delete it (Admin only)\n\nCustomers can only see their own bookings under 'My Bookings'." },
+
+        { p: ["edit a booking", "change a booking", "modify booking", "update booking"],
+          k: [],
+          r: "**Editing a booking:**\n\n1. Go to **Bookings** in the top menu\n2. Find the booking and click **Edit**\n3. Change the dates, room, or guest count as needed\n4. Save changes\n\nNote: changing the room or dates may affect the payment amount. The customer is not automatically notified of edits — if it's a significant change, it's good practice to contact them." },
+
+        { p: ["delete a booking", "remove a booking", "cancel booking as admin"],
+          k: [],
+          r: "**Deleting a booking (Admin only):**\n\nGo to **Bookings**, find the booking, and click **Delete**. You'll be asked to confirm.\n\nNote: only Admins can delete bookings. Staff can view and edit but not delete.\n\nIf a customer wants to cancel, it's better to process their cancellation request through **Manage → Requests** so there's a proper audit trail." },
+
+        // ── Live Chat ──────────────────────────────────────────────────────────
+        { p: ["how does live chat work", "live chat system", "how to use live chat", "how to chat with customer",
+              "pick up a chat", "answer a chat", "respond to chat"],
+          k: ["live chat", "chat"],
+          r: "**How the Live Chat system works:**\n\n1. A customer opens the chat widget on their screen\n2. They chat with the automated bot first\n3. If they're not satisfied, they click **'Talk to Staff'** — this puts them in a **Waiting** queue\n4. You'll see a notification on **Manage → Live Chat**\n5. Click **Join** to pick up the chat — you'll enter a live chat room\n6. Type your replies and press Send\n7. When done, click **Close Chat**\n\nThe customer sees all messages in real time. Chat history is saved in the database." },
+
+        { p: ["chat dashboard", "staff chat dashboard", "see waiting chats", "who is waiting"],
+          k: [],
+          r: "**Live Chat Dashboard:**\n\nGo to **Manage → Live Chat** to see the chat dashboard.\n\nYou'll see:\n• **Waiting** — customers waiting for staff (pick these up!)\n• **Active** — chats currently being handled by staff\n\nNew waiting chats appear in real time thanks to SignalR. Click **Join** on any waiting chat to start helping the customer." },
+
+        // ── Customers ──────────────────────────────────────────────────────────
+        { p: ["view customers", "find a customer", "search customers", "customer list"],
+          k: ["customers"],
+          r: "**Viewing customers:**\n\nGo to **Manage → Customers** to see all registered customers.\n\nYou can search by name, email, or phone using the search bar. Click a customer to see their details including contact info and booking history." },
+
+        { p: ["reset customer password", "change customer password", "customer forgot password", "unlock customer account"],
+          k: [],
+          r: "**Resetting a customer's password (Admin only):**\n\n1. Go to **Manage → Customers**\n2. Find the customer and click **Reset Password**\n3. Enter a new password for them (must meet the password policy)\n4. Save — they can now log in with the new password\n\nLet the customer know their new password via phone or in person, as there's no automatic email for admin-reset passwords." },
+
+        { p: ["create customer", "add a customer", "new customer", "register customer"],
+          k: [],
+          r: "**Creating a customer account (Admin only):**\n\n1. Go to **Manage → Customers**\n2. Click **Create**\n3. Fill in the customer's full name, email, and phone\n4. Save\n\nThis creates the customer record. The customer will still need to register on the Login page to create their actual login account — the two get linked automatically by matching email address." },
+
+        // ── Rooms ──────────────────────────────────────────────────────────────
+        { p: ["add a room", "create a room", "new room", "how to add room"],
+          k: [],
+          r: "**Adding a room (Admin only):**\n\n1. Go to **Manage → Rooms**\n2. Click **Create**\n3. Fill in: Room Number, Room Type (Twin/Deluxe/Suite), Price per night, Capacity, and Description\n4. Save\n\nThe room will immediately appear in the customer-facing search results when it's available for the requested dates." },
+
+        { p: ["edit a room", "update room", "change room price", "room details"],
+          k: [],
+          r: "**Editing a room (Admin only):**\n\n1. Go to **Manage → Rooms**\n2. Find the room and click **Edit**\n3. Update any details — price, capacity, description, etc.\n4. Save\n\nChanges take effect immediately for new searches. Existing confirmed bookings keep their original price." },
+
+        { p: ["delete a room", "remove a room"],
+          k: [],
+          r: "**Deleting a room (Admin only):**\n\nGo to **Manage → Rooms**, find the room, and click **Delete**. Confirm when prompted.\n\nWarning: only delete rooms that have no active or future bookings. If a room has bookings, resolve those first." },
+
+        // ── Products ──────────────────────────────────────────────────────────
+        { p: ["what are products", "manage products", "add a product", "create product", "product list"],
+          k: ["product", "products"],
+          r: "**Products (Admin only):**\n\nProducts are items or services that can be ordered or added to bookings — e.g. room service items, extra amenities, or add-ons.\n\nGo to **Manage → Products** to:\n• View all products\n• Create new products (name, description, price)\n• Edit or delete existing products\n\nStaff cannot access the Products section — this is Admin only." },
+
+        // ── Staff Accounts ──────────────────────────────────────────────────────
+        { p: ["create staff account", "add staff", "new staff", "how to add staff", "create a staff login"],
+          k: [],
+          r: "**Creating a Staff account (Admin only):**\n\n1. Go to **Manage → Staff Accounts**\n2. Click **New Staff Account**\n3. Enter the staff member's email and a password\n4. Click **Create Account**\n\nThe account is created immediately with the Staff role. Share the email and password with the staff member so they can log in. They can change their password from their profile after logging in." },
+
+        { p: ["delete staff account", "remove staff", "deactivate staff"],
+          k: [],
+          r: "**Deleting a Staff account (Admin only):**\n\nGo to **Manage → Staff Accounts**, find the staff member, and click **Delete**. Confirm when prompted.\n\nThe account is removed immediately — the staff member won't be able to log in after this." },
+
+        { p: ["what can staff do", "staff permissions", "staff role", "staff access", "what does staff have access to"],
+          k: ["staff"],
+          r: "**Staff role permissions:**\n\n✅ **Can do:**\n• Handle live customer chat\n• Approve / reject customer requests\n• View, create & edit bookings\n• View customer list & details\n• View payment statements\n• Access room service orders\n\n❌ **Cannot do (Admin only):**\n• View analytics dashboard\n• Create / edit / delete rooms\n• Manage products\n• Create or delete staff accounts\n• Create, edit, delete or reset customer accounts\n• Delete bookings or requests\n• View the audit log" },
+
+        // ── Dashboard ──────────────────────────────────────────────────────────
+        { p: ["how to use dashboard", "what is the dashboard", "admin dashboard", "analytics dashboard"],
+          k: ["dashboard"],
+          r: "**Admin Dashboard (Admin only):**\n\nGo to **Dashboard** in the top nav. It shows:\n\n• **Occupancy rate** — percentage of rooms currently booked\n• **Revenue charts** — earnings over time and by room type\n• **Upcoming check-ins/outs** — guests arriving or leaving soon\n• **Pending requests** — requests waiting for your action\n• **Recent bookings** — latest activity\n\nData refreshes each time you load the page. Only Admins can see the Dashboard." },
+
+        // ── Audit Log ─────────────────────────────────────────────────────────
+        { p: ["audit log", "what is audit log", "how to use audit log", "view audit log", "system log"],
+          k: ["audit"],
+          r: "**Audit Log (Admin only):**\n\nGo to **Manage → Audit Log** to see a chronological record of all significant actions in the system:\n\n• Who did what (admin, staff, or customer)\n• What action was taken (created, updated, deleted, approved, etc.)\n• When it happened (date & time)\n\nUseful for tracking changes, investigating issues, or reviewing staff activity. Staff cannot access this — Admin only." },
+
+        // ── Payments ──────────────────────────────────────────────────────────
+        { p: ["view payments", "payment history", "payment statement", "see customer payment"],
+          k: ["payment", "payments"],
+          r: "**Viewing payments:**\n\nGo to **Bookings** and click **Statement** on any booking to see the full payment history — amounts paid, dates, and remaining balance.\n\nCustomers pay online from their 'My Bookings' page. A 20% deposit is required first; the rest can be paid any time before check-out.\n\nYou cannot take manual payments through this system — customers pay themselves through their account." },
+
+        // ── Notifications / Emails ─────────────────────────────────────────────
+        { p: ["email notifications", "does system send emails", "automatic emails", "how are customers notified"],
+          k: ["email", "notification"],
+          r: "**Automatic email notifications:**\n\nThe system sends emails to customers automatically when:\n• A booking request is **approved** or **rejected**\n• A payment is received\n• A customer request status changes\n\nEmails are sent from the SMTP address configured by the admin. You don't need to do anything — it happens automatically when you approve/reject/action requests." },
+
+        // ── General ───────────────────────────────────────────────────────────
+        { p: ["hello", "hi there", "good morning"],
+          k: ["hello", "hi", "hey"],
+          r: "Hi! I'm the WebHotel staff help guide. Ask me anything about how the system works.\n\nSome popular questions:\n• How do I approve a request?\n• How does live chat work?\n• How do I reset a customer password?\n• What can staff do?\n• How do I create a staff account?" },
+
+        { p: ["thank you", "thanks", "that helped"],
+          k: ["thank", "thanks"],
+          r: "You're welcome! Let me know if you have any other questions about the system." },
+
+        { p: ["what can you help with", "what do you know", "help"],
+          k: ["help"],
+          r: "I can answer questions about how WebHotel works for staff and admins. Topics I cover:\n\n• **Requests** — approving, rejecting, types of requests\n• **Bookings** — creating, editing, deleting\n• **Live Chat** — how to pick up and handle chats\n• **Customers** — viewing, creating, resetting passwords\n• **Rooms** — adding, editing, deleting (Admin)\n• **Products** — managing (Admin)\n• **Staff Accounts** — creating, deleting (Admin)\n• **Dashboard & Audit Log** (Admin)\n• **Payments & emails**\n\nJust type your question!" },
+    ];
+
+    function getResponse(msg) {
+        var lower = msg.toLowerCase().trim();
+
+        var best = null;
+        var bestScore = 0;
+
+        faqs.forEach(function (faq) {
+            var phraseScore = 0;
+            faq.p.forEach(function (phrase) {
+                if (lower.indexOf(phrase) !== -1) {
+                    var words = phrase.split(' ').length;
+                    if (words > phraseScore) phraseScore = words;
+                }
+            });
+
+            var keywordScore = phraseScore === 0
+                ? faq.k.filter(function (kw) { return lower.indexOf(kw) !== -1; }).length
+                : 0;
+
+            var score = phraseScore * 10 + keywordScore;
+            if (score > bestScore) {
+                bestScore = score;
+                best = faq.r;
+            }
+        });
+
+        if (best) return best;
+
+        return "I'm not sure about that. I can help with:\nrequests, bookings, live chat, customers, rooms, products, staff accounts, dashboard, payments, or audit log.\n\nTry rephrasing, or contact the system admin for help.";
+    }
+})();
+</script>

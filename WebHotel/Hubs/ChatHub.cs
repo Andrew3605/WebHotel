@@ -24,21 +24,23 @@ namespace WebHotel.Hubs
 
         // ─── Customer methods ───────────────────────────
 
-        /// <summary>Customer opens the chat widget — find or create a session.</summary>
+        /// <summary>Customer opens the chat widget — find or create a session. Returns session info + history.</summary>
         [Authorize(Roles = "Customer")]
-        public async Task<int> StartSession()
+        public async Task<object> StartSession()
         {
             var user = await _users.GetUserAsync(Context.User!);
             if (user?.CustomerId == null) throw new HubException("Not a customer.");
 
             // Reuse an open session if one exists
             var session = await _db.ChatSessions
-                .Include(s => s.Messages)
+                .Include(s => s.Messages.OrderBy(m => m.SentAt))
                 .Where(s => s.CustomerId == user.CustomerId.Value && s.Status != ChatSessionStatus.Closed)
                 .OrderByDescending(s => s.CreatedAt)
                 .FirstOrDefaultAsync();
 
-            if (session == null)
+            bool isNew = session == null;
+
+            if (isNew)
             {
                 var customer = await _db.Customers.FindAsync(user.CustomerId.Value);
                 session = new ChatSession
@@ -53,9 +55,23 @@ namespace WebHotel.Hubs
             }
 
             // Join the SignalR group for this session
-            await Groups.AddToGroupAsync(Context.ConnectionId, $"chat-{session.Id}");
+            await Groups.AddToGroupAsync(Context.ConnectionId, $"chat-{session!.Id}");
 
-            return session.Id;
+            var messages = isNew ? [] : session.Messages.Select(m => new
+            {
+                senderRole = m.SenderRole.ToString(),
+                senderName = m.SenderName,
+                content = m.Content,
+                sentAt = m.SentAt
+            }).ToList();
+
+            return new
+            {
+                sessionId = session.Id,
+                status = session.Status.ToString(),
+                staffName = session.StaffName,
+                messages
+            };
         }
 
         /// <summary>Customer sends a message.</summary>

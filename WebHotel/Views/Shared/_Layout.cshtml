@@ -50,34 +50,47 @@
                                     <i class="bi bi-calendar-check"></i> Bookings
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="StaffChat" asp-action="Index">
-                                    <i class="bi bi-headset"></i> Live Chat
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-grid"></i> Manage
                                 </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Customers" asp-action="Index">
-                                    <i class="bi bi-people"></i> Customers
-                                </a>
-                            </li>
-                        }
-
-                        @if (User.IsInRole("Admin"))
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Rooms" asp-action="Index">
-                                    <i class="bi bi-door-open"></i> Rooms
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Products" asp-action="Index">
-                                    <i class="bi bi-box-seam"></i> Products
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" asp-controller="Home" asp-action="AuditLog">
-                                    <i class="bi bi-journal-text"></i> Audit Log
-                                </a>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Customers" asp-action="Index">
+                                            <i class="bi bi-people"></i> Customers
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="StaffChat" asp-action="Index">
+                                            <i class="bi bi-headset"></i> Live Chat
+                                        </a>
+                                    </li>
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Rooms" asp-action="Index">
+                                                <i class="bi bi-door-open"></i> Rooms
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Products" asp-action="Index">
+                                                <i class="bi bi-box-seam"></i> Products
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="StaffAccount" asp-action="Index">
+                                                <i class="bi bi-person-badge"></i> Staff Accounts
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Home" asp-action="AuditLog">
+                                                <i class="bi bi-journal-text"></i> Audit Log
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
                             </li>
                         }
 
@@ -123,6 +136,11 @@
     @if (User.IsInRole("Customer"))
     {
         <partial name="_ChatWidget" />
+    }
+
+    @if (User.IsInRole("Admin") || User.IsInRole("Staff"))
+    {
+        <partial name="_StaffHelpWidget" />
     }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
