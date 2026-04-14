@@ -25,9 +25,10 @@ namespace WebHotel.Controllers
             _userManager = userManager;
         }
 
-        // GET: Customers
-        public async Task<IActionResult> Index(string? search)
+        // GET: Customers?search=foo&page=2
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
+            const int pageSize = 15;
             var query = _context.Customers.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -43,7 +44,9 @@ namespace WebHotel.Controllers
             }
 
             ViewData["CurrentSearch"] = search;
-            return View(await query.OrderBy(c => c.FullName).ToListAsync());
+            var ordered = query.OrderBy(c => c.FullName);
+            var paginated = await PaginatedList<Customer>.CreateAsync(ordered, page, pageSize);
+            return View(paginated);
         }
 
         // GET: Customers/Details/5

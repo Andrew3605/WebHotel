@@ -1,6 +1,6 @@
 # WebHotel
 
-WebHotel is an ASP.NET Core MVC hotel booking system built with role-based access for customers and admins. It includes booking workflows, request handling, product management, account administration, a REST API with Swagger documentation, Docker support, and structured logging.
+WebHotel is an ASP.NET Core MVC hotel booking system built with role-based access for customers and admins. It includes booking workflows, request handling, product management, account administration, a REST API with Swagger documentation, Docker support, structured logging, an admin dashboard with analytics, and email notifications.
 
 ## Highlights
 
@@ -13,6 +13,10 @@ WebHotel is an ASP.NET Core MVC hotel booking system built with role-based acces
 - REST API with Swagger/OpenAPI documentation
 - Docker and Docker Compose for containerized deployment
 - Structured logging with Serilog (console + rolling file)
+- Admin dashboard with occupancy, revenue, and booking charts (Chart.js)
+- Email notifications for booking confirmations, payment receipts, and request status updates
+- Full customer request workflow: NewBooking, ExtendStay, ChangeRoom, EarlyCheckout, OrderFood
+- Paginated admin views with query string search persistence
 - Automated test suite with 39 tests (unit + API controller tests)
 
 ## Tech Stack
@@ -25,6 +29,8 @@ WebHotel is an ASP.NET Core MVC hotel booking system built with role-based acces
 - Razor Views + Bootstrap
 - REST API + Swagger/OpenAPI (Swashbuckle)
 - Serilog (structured logging)
+- Chart.js (admin dashboard charts)
+- SMTP email notifications
 - Docker + Docker Compose
 - xUnit (unit + integration tests)
 - GitHub Actions (CI)
@@ -89,6 +95,40 @@ The application exposes a full REST API alongside the MVC views:
 ### Swagger UI
 
 Interactive API documentation is available at `/swagger` when the app is running.
+
+## Admin Dashboard
+
+Admins have access to a dashboard at `/Home/Dashboard` showing:
+
+- **Summary cards**: total bookings, revenue received, outstanding balance, pending requests
+- **Occupancy rate**: rooms occupied today vs total rooms with progress bar
+- **Bookings chart**: bar chart of bookings per month (last 6 months) via Chart.js
+- **Revenue chart**: doughnut chart of revenue breakdown by room type
+- **Recent bookings table**: last 5 bookings with payment status and quick links
+
+## Email Notifications
+
+The system sends HTML email notifications at key workflow points:
+
+- **Booking confirmation** when a customer request is approved and a booking is created
+- **Payment receipt** when a customer makes an online payment
+- **Request status update** when an admin approves or rejects a customer request
+
+Email is configured via SMTP settings in `appsettings.json`. Delivery failures are logged but do not block the user workflow.
+
+## Customer Request Workflow
+
+All request types are now fully handled on admin approval:
+
+| Request Type | What Happens on Approval |
+|-------------|--------------------------|
+| NewBooking | Creates a new booking with conflict detection |
+| ExtendStay | Extends the checkout date and recalculates the price |
+| ChangeRoom | Moves the booking to a different room and recalculates |
+| EarlyCheckout | Shortens the stay to the requested date and recalculates |
+| OrderFood | Status change only (no automated booking action) |
+
+Conflicting requests (room overlap) are automatically rejected.
 
 ## Logging
 

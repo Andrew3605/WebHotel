@@ -35,6 +35,12 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// Email service
+var smtpSettings = builder.Configuration.GetSection("Smtp").Get<WebHotel.Services.SmtpSettings>()
+    ?? new WebHotel.Services.SmtpSettings();
+builder.Services.AddSingleton(smtpSettings);
+builder.Services.AddSingleton<WebHotel.Services.IHotelEmailSender, WebHotel.Services.SmtpEmailSender>();
+
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))

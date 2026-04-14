@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebHotel.Data;
 using WebHotel.Models;
+using WebHotel.ViewModels;
 
 namespace WebHotel.Controllers
 {
@@ -98,10 +99,12 @@ namespace WebHotel.Controllers
 
         // ---------------- ADMIN PAGES -------------------
 
-        // GET: Bookings
+        // GET: Bookings?search=foo&page=2
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> Index(string? search)
+        public async Task<IActionResult> Index(string? search, int page = 1)
         {
+            const int pageSize = 10;
+
             IQueryable<Booking> query = _context.Bookings
                 .Include(b => b.Customer)
                 .Include(b => b.Room)
@@ -129,10 +132,9 @@ namespace WebHotel.Controllers
             }
 
             ViewData["CurrentSearch"] = search;
-            return View(await query
-                .OrderByDescending(b => b.CheckIn)
-                .ThenByDescending(b => b.Id)
-                .ToListAsync());
+            var ordered = query.OrderByDescending(b => b.CheckIn).ThenByDescending(b => b.Id);
+            var paginated = await PaginatedList<Booking>.CreateAsync(ordered, page, pageSize);
+            return View(paginated);
         }
 
         // (Optional) Details page if you have the view

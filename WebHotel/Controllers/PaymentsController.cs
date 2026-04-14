@@ -14,11 +14,13 @@ namespace WebHotel.Controllers
     {
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _users;
+        private readonly IHotelEmailSender _email;
 
-        public PaymentsController(AppDbContext db, UserManager<ApplicationUser> users)
+        public PaymentsController(AppDbContext db, UserManager<ApplicationUser> users, IHotelEmailSender email)
         {
             _db = db;
             _users = users;
+            _email = email;
         }
 
         [Authorize(Roles = "Customer")]
@@ -85,6 +87,14 @@ namespace WebHotel.Controllers
             UpdateBookingPaymentStatus(booking);
 
             await _db.SaveChangesAsync();
+
+            // Send payment receipt email
+            if (booking.Customer != null)
+            {
+                var newBalance = BookingPaymentCalculator.GetBalanceDue(booking.TotalPrice, booking.PaymentEntries);
+                await _email.SendPaymentReceiptAsync(booking.Customer.Email, booking.Customer.FullName,
+                    booking.Id, amountToCharge, Math.Max(0, newBalance));
+            }
 
             TempData["PaymentOk"] = $"Payment of {amountToCharge:C} was recorded for booking #{booking.Id}.";
             return RedirectToAction(nameof(Statement), new { bookingId = booking.Id });

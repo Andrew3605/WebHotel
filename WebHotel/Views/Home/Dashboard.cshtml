@@ -1,0 +1,230 @@
+@model WebHotel.ViewModels.AdminDashboardVm
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<h2 class="mb-4"><i class="bi bi-speedometer2"></i> Admin Dashboard</h2>
+
+<!-- Summary Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-bg-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-1 opacity-75">Total Bookings</h6>
+                        <h2 class="card-title mb-0">@Model.TotalBookings</h2>
+                    </div>
+                    <i class="bi bi-calendar-check fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-bg-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-1 opacity-75">Revenue Received</h6>
+                        <h2 class="card-title mb-0">@Model.TotalRevenue.ToString("C0")</h2>
+                    </div>
+                    <i class="bi bi-cash-stack fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-bg-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-1 opacity-75">Outstanding</h6>
+                        <h2 class="card-title mb-0">@Model.OutstandingBalance.ToString("C0")</h2>
+                    </div>
+                    <i class="bi bi-exclamation-triangle fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+        <div class="card text-bg-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-1 opacity-75">Pending Requests</h6>
+                        <h2 class="card-title mb-0">@Model.PendingRequests</h2>
+                    </div>
+                    <i class="bi bi-inbox fs-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Occupancy Bar -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Today's Occupancy</h6>
+                <h1 class="display-4 fw-bold text-primary">@Model.OccupancyRate%</h1>
+                <p class="text-muted mb-2">@Model.RoomsOccupiedToday of @Model.TotalRooms rooms occupied</p>
+                <div class="progress" style="height: 12px;">
+                    <div class="progress-bar bg-primary" role="progressbar"
+                         style="width: @Model.OccupancyRate%"
+                         aria-valuenow="@Model.OccupancyRate" aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Total Rooms</h6>
+                <h1 class="display-4 fw-bold text-secondary">@Model.TotalRooms</h1>
+                <a asp-controller="Rooms" asp-action="Index" class="btn btn-outline-secondary btn-sm mt-2">
+                    <i class="bi bi-door-open"></i> Manage Rooms
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h6 class="text-muted mb-2">Total Customers</h6>
+                <h1 class="display-4 fw-bold text-secondary">@Model.TotalCustomers</h1>
+                <a asp-controller="Customers" asp-action="Index" class="btn btn-outline-secondary btn-sm mt-2">
+                    <i class="bi bi-people"></i> Manage Customers
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-bar-chart"></i> Bookings (Last 6 Months)</div>
+            <div class="card-body">
+                <canvas id="bookingsChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-pie-chart"></i> Revenue by Room Type</div>
+            <div class="card-body">
+                <canvas id="revenueChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Bookings Table -->
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clock-history"></i> Recent Bookings</span>
+        <a asp-controller="Bookings" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer</th>
+                        <th>Room</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th class="text-end">Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.RecentBookings)
+                    {
+                        <tr>
+                            <td><a asp-controller="Bookings" asp-action="Details" asp-route-id="@b.Id">#@b.Id</a></td>
+                            <td>@b.CustomerName</td>
+                            <td>@b.RoomNumber</td>
+                            <td>@b.CheckIn.ToString("dd MMM yyyy")</td>
+                            <td>@b.CheckOut.ToString("dd MMM yyyy")</td>
+                            <td class="text-end">@b.TotalPrice.ToString("C")</td>
+                            <td>
+                                @if (b.IsPaid)
+                                {
+                                    <span class="badge bg-success">Paid</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Unpaid</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.RecentBookings.Any())
+                    {
+                        <tr><td colspan="7" class="text-center text-muted py-3">No bookings yet.</td></tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script>
+        // Bookings bar chart
+        new Chart(document.getElementById('bookingsChart'), {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BookingMonths)),
+                datasets: [{
+                    label: 'Bookings',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.BookingCounts)),
+                    backgroundColor: 'rgba(31, 119, 180, 0.7)',
+                    borderColor: 'rgba(31, 119, 180, 1)',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+            }
+        });
+
+        // Revenue doughnut chart
+        var typeColors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b'];
+        new Chart(document.getElementById('revenueChart'), {
+            type: 'doughnut',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RoomTypes)),
+                datasets: [{
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.RevenueByType)),
+                    backgroundColor: typeColors.slice(0, @Model.RoomTypes.Count),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.label + ': $' + ctx.parsed.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

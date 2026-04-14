@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using WebHotel.Data;
 using WebHotel.Models;
+using WebHotel.Services;
 
 namespace WebHotel.Controllers
 {
@@ -16,11 +17,13 @@ namespace WebHotel.Controllers
     {
         private readonly AppDbContext _db;
         private readonly UserManager<ApplicationUser> _users;
+        private readonly IHotelEmailSender _email;
 
-        public CustomerRequestsController(AppDbContext db, UserManager<ApplicationUser> users)
+        public CustomerRequestsController(AppDbContext db, UserManager<ApplicationUser> users, IHotelEmailSender email)
         {
             _db = db;
             _users = users;
+            _email = email;
         }
 
         // =============== CUSTOMER ===============
@@ -162,7 +165,7 @@ namespace WebHotel.Controllers
             return View(list);
         }
 
-        // POST: /CustomerRequests/Approve/5 — for NewBooking, creates Booking
+        // POST: /CustomerRequests/Approve/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin")]
@@ -171,38 +174,55 @@ namespace WebHotel.Controllers
             var r = await _db.CustomerRequests.FindAsync(id);
             if (r == null) return NotFound();
 
-            if (r.Type == RequestType.NewBooking && r.RoomId.HasValue && r.CheckIn.HasValue && r.CheckOut.HasValue)
+            switch (r.Type)
             {
-                // overlap check
-                bool conflict = await _db.Bookings.AnyAsync(b =>
-                    b.RoomId == r.RoomId.Value &&
-                    !(b.CheckOut <= r.CheckIn.Value || b.CheckIn >= r.CheckOut.Value));
+                case RequestType.NewBooking:
+                    if (!await ApproveNewBooking(r)) return RedirectToAction(nameof(Admin));
+                    break;
 
-                if (conflict)
-                {
-                    r.Status = RequestStatus.Rejected;
-                    await _db.SaveChangesAsync();
-                    return RedirectToAction(nameof(Admin));
-                }
+                case RequestType.ExtendStay:
+                    if (!await ApproveExtendStay(r)) return RedirectToAction(nameof(Admin));
+                    break;
 
-                var room = await _db.Rooms.FindAsync(r.RoomId.Value);
-                var nights = Math.Max(1, (r.CheckOut.Value.Date - r.CheckIn.Value.Date).Days);
-                var total = (room?.PricePerNight ?? 0m) * nights;
+                case RequestType.ChangeRoom:
+                    if (!await ApproveChangeRoom(r)) return RedirectToAction(nameof(Admin));
+                    break;
 
-                _db.Bookings.Add(new Booking
-                {
-                    CustomerId = r.CustomerId ?? 0,
-                    RoomId = r.RoomId.Value,
-                    CheckIn = r.CheckIn.Value.Date,
-                    CheckOut = r.CheckOut.Value.Date,
-                    TotalPrice = total,
-                    IsPaid = false,
-                    CreatedAt = DateTime.UtcNow
-                });
+                case RequestType.EarlyCheckout:
+                    if (!await ApproveEarlyCheckout(r)) return RedirectToAction(nameof(Admin));
+                    break;
+
+                // OrderFood — no automated action, just status change
+                default:
+                    break;
             }
 
             r.Status = RequestStatus.Approved;
             await _db.SaveChangesAsync();
+
+            // Send email notification
+            if (r.CustomerId.HasValue)
+            {
+                var customer = await _db.Customers.FindAsync(r.CustomerId.Value);
+                if (customer != null)
+                {
+                    await _email.SendRequestStatusAsync(customer.Email, customer.FullName,
+                        r.Type.ToString(), "Approved");
+
+                    // Send booking confirmation for new bookings
+                    if (r.Type == RequestType.NewBooking && r.RoomId.HasValue)
+                    {
+                        var roomForEmail = await _db.Rooms.FindAsync(r.RoomId.Value);
+                        var booking = await _db.Bookings
+                            .OrderByDescending(b => b.CreatedAt)
+                            .FirstOrDefaultAsync(b => b.CustomerId == r.CustomerId && b.RoomId == r.RoomId);
+                        if (booking != null && roomForEmail != null)
+                            await _email.SendBookingConfirmationAsync(customer.Email, customer.FullName,
+                                booking.Id, roomForEmail.Number, booking.CheckIn, booking.CheckOut, booking.TotalPrice);
+                    }
+                }
+            }
+
             return RedirectToAction(nameof(Admin));
         }
 
@@ -217,6 +237,16 @@ namespace WebHotel.Controllers
 
             r.Status = RequestStatus.Rejected;
             await _db.SaveChangesAsync();
+
+            // Send email notification
+            if (r.CustomerId.HasValue)
+            {
+                var customer = await _db.Customers.FindAsync(r.CustomerId.Value);
+                if (customer != null)
+                    await _email.SendRequestStatusAsync(customer.Email, customer.FullName,
+                        r.Type.ToString(), "Rejected");
+            }
+
             return RedirectToAction(nameof(Admin));
         }
 
@@ -253,6 +283,98 @@ namespace WebHotel.Controllers
             }
 
             return RedirectToAction(nameof(Admin));
+        }
+
+        // =============== REQUEST HANDLERS ===============
+
+        /// <summary>Creates a new booking from the request. Returns false if conflict (auto-rejects).</summary>
+        private async Task<bool> ApproveNewBooking(CustomerRequest r)
+        {
+            if (!r.RoomId.HasValue || !r.CheckIn.HasValue || !r.CheckOut.HasValue)
+                return true; // nothing to do, just approve status
+
+            bool conflict = await _db.Bookings.AnyAsync(b =>
+                b.RoomId == r.RoomId.Value &&
+                !(b.CheckOut <= r.CheckIn.Value || b.CheckIn >= r.CheckOut.Value));
+
+            if (conflict) { r.Status = RequestStatus.Rejected; await _db.SaveChangesAsync(); return false; }
+
+            var room = await _db.Rooms.FindAsync(r.RoomId.Value);
+            var nights = Math.Max(1, (r.CheckOut.Value.Date - r.CheckIn.Value.Date).Days);
+
+            _db.Bookings.Add(new Booking
+            {
+                CustomerId = r.CustomerId ?? 0,
+                RoomId = r.RoomId.Value,
+                CheckIn = r.CheckIn.Value.Date,
+                CheckOut = r.CheckOut.Value.Date,
+                TotalPrice = (room?.PricePerNight ?? 0m) * nights,
+                CreatedAt = DateTime.UtcNow
+            });
+            return true;
+        }
+
+        /// <summary>Extends the checkout date and recalculates the total price.</summary>
+        private async Task<bool> ApproveExtendStay(CustomerRequest r)
+        {
+            if (!r.BookingId.HasValue || !r.CheckOut.HasValue) return true;
+
+            var booking = await _db.Bookings.Include(b => b.Room).FirstOrDefaultAsync(b => b.Id == r.BookingId.Value);
+            if (booking == null) return true;
+
+            var newCheckOut = r.CheckOut.Value.Date;
+            if (newCheckOut <= booking.CheckOut) return true; // not actually extending
+
+            bool conflict = await _db.Bookings.AnyAsync(b =>
+                b.RoomId == booking.RoomId && b.Id != booking.Id &&
+                !(b.CheckOut <= booking.CheckIn || b.CheckIn >= newCheckOut));
+
+            if (conflict) { r.Status = RequestStatus.Rejected; await _db.SaveChangesAsync(); return false; }
+
+            booking.CheckOut = newCheckOut;
+            var nights = Math.Max(1, (booking.CheckOut.Date - booking.CheckIn.Date).Days);
+            booking.TotalPrice = (booking.Room?.PricePerNight ?? 0m) * nights;
+            return true;
+        }
+
+        /// <summary>Moves a booking to a different room and recalculates the price.</summary>
+        private async Task<bool> ApproveChangeRoom(CustomerRequest r)
+        {
+            if (!r.BookingId.HasValue || !r.RoomId.HasValue) return true;
+
+            var booking = await _db.Bookings.FirstOrDefaultAsync(b => b.Id == r.BookingId.Value);
+            if (booking == null) return true;
+
+            var newRoom = await _db.Rooms.FindAsync(r.RoomId.Value);
+            if (newRoom == null) return true;
+
+            bool conflict = await _db.Bookings.AnyAsync(b =>
+                b.RoomId == r.RoomId.Value && b.Id != booking.Id &&
+                !(b.CheckOut <= booking.CheckIn || b.CheckIn >= booking.CheckOut));
+
+            if (conflict) { r.Status = RequestStatus.Rejected; await _db.SaveChangesAsync(); return false; }
+
+            booking.RoomId = newRoom.Id;
+            var nights = Math.Max(1, (booking.CheckOut.Date - booking.CheckIn.Date).Days);
+            booking.TotalPrice = newRoom.PricePerNight * nights;
+            return true;
+        }
+
+        /// <summary>Moves the checkout date earlier (today or request date) and recalculates.</summary>
+        private async Task<bool> ApproveEarlyCheckout(CustomerRequest r)
+        {
+            if (!r.BookingId.HasValue) return true;
+
+            var booking = await _db.Bookings.Include(b => b.Room).FirstOrDefaultAsync(b => b.Id == r.BookingId.Value);
+            if (booking == null) return true;
+
+            var newCheckOut = r.CheckOut?.Date ?? DateTime.UtcNow.Date;
+            if (newCheckOut <= booking.CheckIn) newCheckOut = booking.CheckIn.AddDays(1); // at least 1 night
+
+            booking.CheckOut = newCheckOut;
+            var nights = Math.Max(1, (booking.CheckOut.Date - booking.CheckIn.Date).Days);
+            booking.TotalPrice = (booking.Room?.PricePerNight ?? 0m) * nights;
+            return true;
         }
     }
 }
