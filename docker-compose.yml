@@ -1,0 +1,31 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Hotel@Pass123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqldata:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "Hotel@Pass123" -C -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  webhotel:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=WebHotelDb;User Id=sa;Password=Hotel@Pass123;TrustServerCertificate=True;MultipleActiveResultSets=true"
+      SeedAdmin__Email: "admin@hotel.local"
+      SeedAdmin__Password: "Admin!1234"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+
+volumes:
+  sqldata:

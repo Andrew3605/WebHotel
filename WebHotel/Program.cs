@@ -3,13 +3,37 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.RateLimiting;
+using Serilog;
 using WebHotel.Data;
 using WebHotel.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// MVC
+// Serilog — structured logging to console + rolling file
+builder.Host.UseSerilog((context, config) => config
+    .ReadFrom.Configuration(context.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/webhotel-.log",
+        rollingInterval: RollingInterval.Day,
+        retainedFileCountLimit: 30));
+
+// MVC + API
 builder.Services.AddControllersWithViews();
+
+// Swagger / OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+    {
+        Title = "WebHotel API",
+        Version = "v1",
+        Description = "REST API for the WebHotel booking system. "
+            + "Public endpoints: room listing and availability search. "
+            + "Admin endpoints: full CRUD for rooms, bookings, customers, and payments."
+    });
+});
 
 // DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -106,12 +130,22 @@ builder.Services.AddRateLimiter(options =>
 
 var app = builder.Build();
 
+// Swagger UI (available in all environments)
+app.UseSwagger();
+app.UseSwaggerUI(options =>
+{
+    options.SwaggerEndpoint("/swagger/v1/swagger.json", "WebHotel API v1");
+    options.RoutePrefix = "swagger";
+});
+
 // Pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
