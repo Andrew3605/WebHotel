@@ -2,6 +2,13 @@
 
 WebHotel is an ASP.NET Core MVC hotel booking system built with three-tier role-based access (Admin, Staff, Customer). It includes booking workflows, request handling, room service ordering, product management, account administration, a REST API with Swagger documentation, Docker support, structured logging, an admin dashboard with analytics, email notifications, an AI-powered customer chat helper with live staff escalation, a staff help guide bot, admin-managed staff accounts, and a comprehensive audit trail.
 
+## Important Notice
+
+This project includes a demo payment workflow for learning and portfolio purposes only.
+It is not intended for real-world card processing or production hotel deployment.
+Do not use this implementation to handle real customer card data in a live environment.
+A production system should integrate a compliant third-party payment provider such as Stripe, PayPal, or another certified gateway.
+
 ## Highlights
 
 - Customer registration and login with ASP.NET Core Identity
@@ -92,7 +99,7 @@ The system uses a three-tier role hierarchy:
 
 ## Demo Access
 
-For local Development runs:
+For local Development runs only:
 
 - Admin email: `admin@hotel.local`
 - Admin password: `Admin!1234`

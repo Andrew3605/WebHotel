@@ -9,6 +9,9 @@ obj/
 ## Visual Studio
 .vs/
 
+## Local tooling
+.claude/
+
 ## User-specific files
 *.rsuser
 *.DotSettings.user
@@ -29,3 +32,7 @@ obj/
 ## OS files
 Thumbs.db
 .DS_Store
+
+## Runtime output
+WebHotel/Logs/
+*.log
